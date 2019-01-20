@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
-	"time"
 )
 
 const defaultCharset = "utf8"
@@ -142,9 +141,6 @@ func NewConn(dsn string) (*Conn, error) {
 	if s.isBad {
 		return nil, driver.ErrBadConn
 	}
-
-	// force timezone
-	time.Local = time.UTC
 
 	c := &Conn{session: s}
 	return c, nil
