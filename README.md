@@ -311,14 +311,14 @@ NewConn returns a TDS session
 
 
 
-### <a name="Conn.Begin">func</a> (Conn) [Begin](/session.go?s=8409:8453#L314)
+### <a name="Conn.Begin">func</a> (Conn) [Begin](/session.go?s=8440:8484#L316)
 ``` go
 func (s Conn) Begin() (driver.Tx, error)
 ```
 
 
 
-### <a name="Conn.BeginTx">func</a> (Conn) [BeginTx](/session.go?s=9261:9349#L333)
+### <a name="Conn.BeginTx">func</a> (Conn) [BeginTx](/session.go?s=9292:9380#L335)
 ``` go
 func (s Conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error)
 ```
@@ -327,7 +327,7 @@ BeginTx implements driver.ConnBeginTx interface
 
 
 
-### <a name="Conn.Close">func</a> (Conn) [Close](/session.go?s=8083:8114#L300)
+### <a name="Conn.Close">func</a> (Conn) [Close](/session.go?s=8114:8145#L302)
 ``` go
 func (s Conn) Close() error
 ```
@@ -337,14 +337,14 @@ by sending logout message and closing tcp connection.
 
 
 
-### <a name="Conn.Commit">func</a> (Conn) [Commit](/session.go?s=10391:10423#L367)
+### <a name="Conn.Commit">func</a> (Conn) [Commit](/session.go?s=10422:10454#L369)
 ``` go
 func (s Conn) Commit() error
 ```
 
 
 
-### <a name="Conn.Exec">func</a> (Conn) [Exec](/session.go?s=12243:12323#L433)
+### <a name="Conn.Exec">func</a> (Conn) [Exec](/session.go?s=12274:12354#L435)
 ``` go
 func (s Conn) Exec(query string, args []driver.Value) (driver.Result, error)
 ```
@@ -354,7 +354,7 @@ The aim is to use language queries when no parameters are given
 
 
 
-### <a name="Conn.ExecContext">func</a> (Conn) [ExecContext](/session.go?s=12459:12578#L442)
+### <a name="Conn.ExecContext">func</a> (Conn) [ExecContext](/session.go?s=12490:12609#L444)
 ``` go
 func (s Conn) ExecContext(ctx context.Context, query string,
     namedArgs []driver.NamedValue) (driver.Result, error)
@@ -379,7 +379,7 @@ The following keys are garanteed to be present:
 
 
 
-### <a name="Conn.Ping">func</a> (Conn) [Ping](/session.go?s=10888:10937#L380)
+### <a name="Conn.Ping">func</a> (Conn) [Ping](/session.go?s=10919:10968#L382)
 ``` go
 func (s Conn) Ping(ctx context.Context) error
 ```
@@ -388,7 +388,7 @@ Ping implements driver.Pinger interface
 
 
 
-### <a name="Conn.Prepare">func</a> (Conn) [Prepare](/session.go?s=13047:13107#L467)
+### <a name="Conn.Prepare">func</a> (Conn) [Prepare](/session.go?s=13078:13138#L469)
 ``` go
 func (s Conn) Prepare(query string) (driver.Stmt, error)
 ```
@@ -397,7 +397,7 @@ Prepare prepares a statement and returns it
 
 
 
-### <a name="Conn.PrepareContext">func</a> (Conn) [PrepareContext](/session.go?s=13240:13328#L475)
+### <a name="Conn.PrepareContext">func</a> (Conn) [PrepareContext](/session.go?s=13271:13359#L477)
 ``` go
 func (s Conn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error)
 ```
@@ -406,7 +406,7 @@ Prepare prepares a statement and returns it
 
 
 
-### <a name="Conn.Query">func</a> (Conn) [Query](/session.go?s=11317:11396#L400)
+### <a name="Conn.Query">func</a> (Conn) [Query](/session.go?s=11348:11427#L402)
 ``` go
 func (s Conn) Query(query string, args []driver.Value) (driver.Rows, error)
 ```
@@ -416,7 +416,7 @@ The aim is to use language queries when no parameters are given
 
 
 
-### <a name="Conn.QueryContext">func</a> (Conn) [QueryContext](/session.go?s=11533:11651#L408)
+### <a name="Conn.QueryContext">func</a> (Conn) [QueryContext](/session.go?s=11564:11682#L410)
 ``` go
 func (s Conn) QueryContext(ctx context.Context, query string,
     namedArgs []driver.NamedValue) (driver.Rows, error)
@@ -426,14 +426,14 @@ Implement the "QueryerContext" interface
 
 
 
-### <a name="Conn.Rollback">func</a> (Conn) [Rollback](/session.go?s=10615:10649#L373)
+### <a name="Conn.Rollback">func</a> (Conn) [Rollback](/session.go?s=10646:10680#L375)
 ``` go
 func (s Conn) Rollback() error
 ```
 
 
 
-### <a name="Conn.SelectValue">func</a> (Conn) [SelectValue](/session.go?s=13459:13554#L483)
+### <a name="Conn.SelectValue">func</a> (Conn) [SelectValue](/session.go?s=13490:13585#L485)
 ``` go
 func (s Conn) SelectValue(ctx context.Context, query string) (value interface{}, err error)
 ```
@@ -759,7 +759,7 @@ Satisfies the driver.Rows interface
 
 
 
-## <a name="Stmt">type</a> [Stmt](/stmt.go?s=241:507#L16)
+## <a name="Stmt">type</a> [Stmt](/stmt.go?s=241:518#L16)
 ``` go
 type Stmt struct {
     ID int64
@@ -778,7 +778,7 @@ Stmt is a prepared statement implementing the driver.Stmt interface
 
 
 
-### <a name="Stmt.Close">func</a> (\*Stmt) [Close](/stmt.go?s=5646:5675#L207)
+### <a name="Stmt.Close">func</a> (\*Stmt) [Close](/stmt.go?s=5611:5640#L207)
 ``` go
 func (st *Stmt) Close() error
 ```
@@ -787,7 +787,7 @@ Close drops the prepared statement from the database
 
 
 
-### <a name="Stmt.ColumnConverter">func</a> (Stmt) [ColumnConverter](/stmt.go?s=6237:6298#L226)
+### <a name="Stmt.ColumnConverter">func</a> (Stmt) [ColumnConverter](/stmt.go?s=6184:6245#L226)
 ``` go
 func (st Stmt) ColumnConverter(idx int) driver.ValueConverter
 ```
@@ -797,7 +797,7 @@ precision, scale and then convert to a valid sql.Driver value.
 
 
 
-### <a name="Stmt.Exec">func</a> (\*Stmt) [Exec](/stmt.go?s=3291:3363#L131)
+### <a name="Stmt.Exec">func</a> (\*Stmt) [Exec](/stmt.go?s=3256:3328#L131)
 ``` go
 func (st *Stmt) Exec(args []driver.Value) (res driver.Result, err error)
 ```
@@ -807,7 +807,7 @@ Implements the database/sql/Stmt interface
 
 
 
-### <a name="Stmt.ExecContext">func</a> (\*Stmt) [ExecContext](/stmt.go?s=3854:3964#L150)
+### <a name="Stmt.ExecContext">func</a> (\*Stmt) [ExecContext](/stmt.go?s=3819:3929#L150)
 ``` go
 func (st *Stmt) ExecContext(ctx context.Context, namedArgs []driver.NamedValue) (res driver.Result, err error)
 ```
@@ -817,7 +817,7 @@ Implements the database/sql/Stmt interface
 
 
 
-### <a name="Stmt.NumInput">func</a> (Stmt) [NumInput](/stmt.go?s=5527:5556#L202)
+### <a name="Stmt.NumInput">func</a> (Stmt) [NumInput](/stmt.go?s=5492:5521#L202)
 ``` go
 func (st Stmt) NumInput() int
 ```
@@ -826,7 +826,7 @@ NumInput returns the number of expected parameters
 
 
 
-### <a name="Stmt.Query">func</a> (\*Stmt) [Query](/stmt.go?s=4589:4652#L175)
+### <a name="Stmt.Query">func</a> (\*Stmt) [Query](/stmt.go?s=4554:4617#L175)
 ``` go
 func (st *Stmt) Query(args []driver.Value) (driver.Rows, error)
 ```
@@ -835,7 +835,7 @@ Query executes a prepared statement and returns rows.
 
 
 
-### <a name="Stmt.QueryContext">func</a> (\*Stmt) [QueryContext](/stmt.go?s=4995:5096#L186)
+### <a name="Stmt.QueryContext">func</a> (\*Stmt) [QueryContext](/stmt.go?s=4960:5061#L186)
 ``` go
 func (st *Stmt) QueryContext(ctx context.Context, namedArgs []driver.NamedValue) (driver.Rows, error)
 ```
@@ -876,8 +876,6 @@ SybError is the struct containing sybase error information
 func (e SybError) Error() string
 ```
 implement the error interface
-
-
 
 
 
