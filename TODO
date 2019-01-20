@@ -1,0 +1,14 @@
+Version 0.2
+- tests for computed columns, output parameters
+- fuzzing
+
+Version 0.5
+- bcp
+- named parameters
+- kerberos
+
+Version 1
+- text pointers??
+- review API/visibility
+- protocol documentation
+- tds stream multiplexing and client side cursors, if needed
