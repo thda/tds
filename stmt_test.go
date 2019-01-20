@@ -438,19 +438,19 @@ func TestSelect(t *testing.T) {
 			{"'abc'", string("abc")},
 			{"cast(null as varchar(3))", nil},
 			{"NULL", nil},
-			{"cast('1753-01-01' as datetime)", time.Date(1753, 1, 1, 0, 0, 0, 0, time.UTC)},
-			{"cast('2000-01-01' as datetime)", time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)},
+			{"cast('1753-01-01' as datetime)", time.Date(1753, 1, 1, 0, 0, 0, 0, time.Local)},
+			{"cast('2000-01-01' as datetime)", time.Date(2000, 1, 1, 0, 0, 0, 0, time.Local)},
 			{"cast('2000-01-01T12:13:14.12' as datetime)",
-				time.Date(2000, 1, 1, 12, 13, 14, 120000000, time.UTC)},
-			{"cast('2014-06-26 11:08:09.673' as datetime)", time.Date(2014, 06, 26, 11, 8, 9, 673000000, time.UTC)},
-			{"cast('9999-12-31T23:59:59.996' as datetime)", time.Date(9999, 12, 31, 23, 59, 59, 996000000, time.UTC)},
+				time.Date(2000, 1, 1, 12, 13, 14, 120000000, time.Local)},
+			{"cast('2014-06-26 11:08:09.673' as datetime)", time.Date(2014, 06, 26, 11, 8, 9, 673000000, time.Local)},
+			{"cast('9999-12-31T23:59:59.996' as datetime)", time.Date(9999, 12, 31, 23, 59, 59, 996000000, time.Local)},
 			{"cast(NULL as datetime)", nil},
 			{"cast('1900-01-01T00:00:00' as smalldatetime)",
-				time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)},
+				time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)},
 			{"cast('2000-01-01T12:13:00' as smalldatetime)",
-				time.Date(2000, 1, 1, 12, 13, 0, 0, time.UTC)},
+				time.Date(2000, 1, 1, 12, 13, 0, 0, time.Local)},
 			{"cast('2079-06-06T23:59:00' as smalldatetime)",
-				time.Date(2079, 6, 6, 23, 59, 0, 0, time.UTC)},
+				time.Date(2079, 6, 6, 23, 59, 0, 0, time.Local)},
 			{"cast(NULL as smalldatetime)", nil},
 			{"cast(0x1234 as varbinary(2))", []byte{0x12, 0x34}},
 			{"cast(null as unitext)", nil},
@@ -849,15 +849,13 @@ func TestDateTimeParam(t *testing.T) {
 		t.Fatal("create table failed")
 	}
 
-	var emptydate time.Time
-	mindate := time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
-	maxdate := time.Date(9999, 12, 31, 23, 59, 59, 999999900, time.UTC)
+	mindate := time.Date(1, 1, 1, 0, 0, 0, 0, time.Local)
+	maxdate := time.Date(9999, 12, 31, 23, 59, 59, 999999900, time.Local)
 	values := []testStruct{
-		{time.Date(1969, time.July, 20, 20, 18, 0, 0, time.UTC)}, // First man on the Moon
-		{time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)},            // UNIX date
-		{time.Date(4, 6, 3, 12, 13, 14, 150000000, time.UTC)},    // some random date
+		{time.Date(1969, time.July, 20, 20, 18, 0, 0, time.Local)}, // First man on the Moon
+		{time.Date(1970, 1, 1, 0, 0, 0, 0, time.Local)},            // UNIX date
+		{time.Date(4, 6, 3, 12, 13, 14, 150000000, time.Local)},    // some random date
 		{mindate}, // minimal value
-		{emptydate},
 	}
 	for _, test := range values {
 		t.Run(fmt.Sprintf("Test for %v", test.t), func(t *testing.T) {

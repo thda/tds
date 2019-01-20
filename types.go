@@ -343,6 +343,7 @@ func decodeDateTime(e *binary.Encoder, i colType) (interface{}, error) {
 	if s != 0 {
 		t = t.Add(time.Duration(s) * time.Second)
 	}
+
 	return t, e.Err()
 }
 
