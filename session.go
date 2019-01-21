@@ -212,13 +212,13 @@ loginResponse:
 		try = 1
 		block, _ := pem.Decode(p.data[1].([]byte))
 		if block == nil {
-			return fmt.Errorf("tds: login failed. Cannot parse server's public key PEM: %s", err)
+			return ErrUnsupportedPassWordEncrytion
 		}
 
 		var pk rsa.PublicKey
 		_, err := asn1.Unmarshal(block.Bytes, &pk)
 		if err != nil {
-			return fmt.Errorf("tds: login failed. Cannot parse server's public key using ans1: %s", err)
+			return ErrUnsupportedPassWordEncrytion
 		}
 
 		// nonce introduces randomness to avoid replay attacks

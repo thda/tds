@@ -38,7 +38,7 @@ use the regular database/sql APIs:
 	)
 	
 	func main() {
-		cnxStr := "tds://my_user:my_password@dbhost.com:5000/pubs?charset=utf8
+		cnxStr := "tds://my_user:my_password@dbhost.com:5000/pubs?charset=utf8"
 		db, err := sql.Open("tds", connStr)
 		if err != nil {
 			log.Fatal(err)
@@ -73,7 +73,7 @@ It is suggested to raise it to avoid truncation.
 
 Less frequently used ones:
 
-* ssl - Whether or not to use SSL. THe default is not to use ssl.
+* ssl - Whether or not to use SSL. The default is not to use ssl.
 Set to "on" if the server is setup to use ssl.
 * encryptPassword - Can be "yes" to require password encryption,
 "no" to disable it, and "try" to try encrytping password an falling back
@@ -147,7 +147,7 @@ You must cast your database/sql connection as sql.Conn to use this extension.
 The following demonstrates how to handle showplan and print messages:
 
 
-	conn = goConn.(*tds.Conn)
+	conn := goConn.(*tds.Conn)
 	
 	// print showplan messages and all
 	conn.SetErrorhandler(func(m tds.SybError) bool {
@@ -166,6 +166,11 @@ The following demonstrates how to handle showplan and print messages:
 		}
 		return m.Severity > 10
 	})
+
+### Limitations
+As of now the driver does not support bulk insert and named parameters.
+Password encryption only works for Sybase ASE > 15.0.1, the old cypher is
+not known.
 
 ### Testing
 You can use stmt_test.go and session_test.go for sample usage, as follows:
@@ -208,7 +213,6 @@ There are differences, however a lot of it is relevant.
   * [func (s Conn) Rollback() error](#Conn.Rollback)
   * [func (s Conn) SelectValue(ctx context.Context, query string) (value interface{}, err error)](#Conn.SelectValue)
   * [func (c *Conn) SetErrorhandler(fn func(s SybError) bool)](#Conn.SetErrorhandler)
-* [type Errorhandler](#Errorhandler)
 * [type Num](#Num)
   * [func (n Num) Rat() big.Rat](#Num.Rat)
   * [func (n *Num) Scan(src interface{}) error](#Num.Scan)
@@ -250,6 +254,7 @@ There are differences, however a lot of it is relevant.
 [changetype_string.go](/changetype_string.go) [columnflag_string.go](/columnflag_string.go) [datatype_string.go](/datatype_string.go) [doc.go](/doc.go) [driver.go](/driver.go) [messages.go](/messages.go) [num.go](/num.go) [result.go](/result.go) [rows.go](/rows.go) [session.go](/session.go) [stmt.go](/stmt.go) [tabular_messages.go](/tabular_messages.go) [token_string.go](/token_string.go) [types.go](/types.go) 
 
 
+
 ## <a name="pkg-variables">Variables</a>
 ``` go
 var ErrBadType = errors.New("invalid type given")
@@ -286,7 +291,7 @@ ErrUnsupportedPassWordEncrytion is caused by an unsupported password encrytion s
 
 
 
-## <a name="Conn">type</a> [Conn](/driver.go?s=979:1009#L45)
+## <a name="Conn">type</a> [Conn](/driver.go?s=896:926#L40)
 ``` go
 type Conn struct {
     // contains filtered or unexported fields
@@ -301,7 +306,7 @@ Conn encapsulates a tds session and satisties driver.Connc
 
 
 
-### <a name="NewConn">func</a> [NewConn](/driver.go?s=3259:3298#L137)
+### <a name="NewConn">func</a> [NewConn](/driver.go?s=3176:3215#L132)
 ``` go
 func NewConn(dsn string) (*Conn, error)
 ```
@@ -311,14 +316,14 @@ NewConn returns a TDS session
 
 
 
-### <a name="Conn.Begin">func</a> (Conn) [Begin](/session.go?s=8440:8484#L316)
+### <a name="Conn.Begin">func</a> (Conn) [Begin](/session.go?s=8339:8383#L316)
 ``` go
 func (s Conn) Begin() (driver.Tx, error)
 ```
 
 
 
-### <a name="Conn.BeginTx">func</a> (Conn) [BeginTx](/session.go?s=9292:9380#L335)
+### <a name="Conn.BeginTx">func</a> (Conn) [BeginTx](/session.go?s=9191:9279#L335)
 ``` go
 func (s Conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error)
 ```
@@ -327,7 +332,7 @@ BeginTx implements driver.ConnBeginTx interface
 
 
 
-### <a name="Conn.Close">func</a> (Conn) [Close](/session.go?s=8114:8145#L302)
+### <a name="Conn.Close">func</a> (Conn) [Close](/session.go?s=8013:8044#L302)
 ``` go
 func (s Conn) Close() error
 ```
@@ -337,14 +342,14 @@ by sending logout message and closing tcp connection.
 
 
 
-### <a name="Conn.Commit">func</a> (Conn) [Commit](/session.go?s=10422:10454#L369)
+### <a name="Conn.Commit">func</a> (Conn) [Commit](/session.go?s=10321:10353#L369)
 ``` go
 func (s Conn) Commit() error
 ```
 
 
 
-### <a name="Conn.Exec">func</a> (Conn) [Exec](/session.go?s=12274:12354#L435)
+### <a name="Conn.Exec">func</a> (Conn) [Exec](/session.go?s=12173:12253#L435)
 ``` go
 func (s Conn) Exec(query string, args []driver.Value) (driver.Result, error)
 ```
@@ -354,7 +359,7 @@ The aim is to use language queries when no parameters are given
 
 
 
-### <a name="Conn.ExecContext">func</a> (Conn) [ExecContext](/session.go?s=12490:12609#L444)
+### <a name="Conn.ExecContext">func</a> (Conn) [ExecContext](/session.go?s=12389:12508#L444)
 ``` go
 func (s Conn) ExecContext(ctx context.Context, query string,
     namedArgs []driver.NamedValue) (driver.Result, error)
@@ -364,7 +369,7 @@ Implement the "ExecerContext" interface
 
 
 
-### <a name="Conn.GetEnv">func</a> (Conn) [GetEnv](/driver.go?s=3976:4016#L169)
+### <a name="Conn.GetEnv">func</a> (Conn) [GetEnv](/driver.go?s=3850:3890#L161)
 ``` go
 func (c Conn) GetEnv() map[string]string
 ```
@@ -379,7 +384,7 @@ The following keys are garanteed to be present:
 
 
 
-### <a name="Conn.Ping">func</a> (Conn) [Ping](/session.go?s=10919:10968#L382)
+### <a name="Conn.Ping">func</a> (Conn) [Ping](/session.go?s=10818:10867#L382)
 ``` go
 func (s Conn) Ping(ctx context.Context) error
 ```
@@ -388,7 +393,7 @@ Ping implements driver.Pinger interface
 
 
 
-### <a name="Conn.Prepare">func</a> (Conn) [Prepare](/session.go?s=13078:13138#L469)
+### <a name="Conn.Prepare">func</a> (Conn) [Prepare](/session.go?s=12977:13037#L469)
 ``` go
 func (s Conn) Prepare(query string) (driver.Stmt, error)
 ```
@@ -397,7 +402,7 @@ Prepare prepares a statement and returns it
 
 
 
-### <a name="Conn.PrepareContext">func</a> (Conn) [PrepareContext](/session.go?s=13271:13359#L477)
+### <a name="Conn.PrepareContext">func</a> (Conn) [PrepareContext](/session.go?s=13170:13258#L477)
 ``` go
 func (s Conn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error)
 ```
@@ -406,7 +411,7 @@ Prepare prepares a statement and returns it
 
 
 
-### <a name="Conn.Query">func</a> (Conn) [Query](/session.go?s=11348:11427#L402)
+### <a name="Conn.Query">func</a> (Conn) [Query](/session.go?s=11247:11326#L402)
 ``` go
 func (s Conn) Query(query string, args []driver.Value) (driver.Rows, error)
 ```
@@ -416,7 +421,7 @@ The aim is to use language queries when no parameters are given
 
 
 
-### <a name="Conn.QueryContext">func</a> (Conn) [QueryContext](/session.go?s=11564:11682#L410)
+### <a name="Conn.QueryContext">func</a> (Conn) [QueryContext](/session.go?s=11463:11581#L410)
 ``` go
 func (s Conn) QueryContext(ctx context.Context, query string,
     namedArgs []driver.NamedValue) (driver.Rows, error)
@@ -426,14 +431,14 @@ Implement the "QueryerContext" interface
 
 
 
-### <a name="Conn.Rollback">func</a> (Conn) [Rollback](/session.go?s=10646:10680#L375)
+### <a name="Conn.Rollback">func</a> (Conn) [Rollback](/session.go?s=10545:10579#L375)
 ``` go
 func (s Conn) Rollback() error
 ```
 
 
 
-### <a name="Conn.SelectValue">func</a> (Conn) [SelectValue](/session.go?s=13490:13585#L485)
+### <a name="Conn.SelectValue">func</a> (Conn) [SelectValue](/session.go?s=13389:13484#L485)
 ``` go
 func (s Conn) SelectValue(ctx context.Context, query string) (value interface{}, err error)
 ```
@@ -442,28 +447,13 @@ Reads exactly one value from an sql query
 
 
 
-### <a name="Conn.SetErrorhandler">func</a> (\*Conn) [SetErrorhandler](/driver.go?s=3747:3803#L160)
+### <a name="Conn.SetErrorhandler">func</a> (\*Conn) [SetErrorhandler](/driver.go?s=3621:3677#L152)
 ``` go
 func (c *Conn) SetErrorhandler(fn func(s SybError) bool)
 ```
 SetErrorhandler allows setting a custom error handler.
 The function shall accept an SQL Message and return a boolean
 indicating if this message is indeed a critical error.
-
-
-
-
-## <a name="Errorhandler">type</a> [Errorhandler](/driver.go?s=842:915#L40)
-``` go
-type Errorhandler interface {
-    SetErrorHandler(func(m sqlMessage) bool)
-}
-```
-
-
-
-
-
 
 
 
@@ -772,13 +762,7 @@ Stmt is a prepared statement implementing the driver.Stmt interface
 
 
 
-
-
-
-
-
-
-### <a name="Stmt.Close">func</a> (\*Stmt) [Close](/stmt.go?s=5611:5640#L207)
+### <a name="Stmt.Close">func</a> (\*Stmt) [Close](/stmt.go?s=5633:5662#L207)
 ``` go
 func (st *Stmt) Close() error
 ```
@@ -787,7 +771,7 @@ Close drops the prepared statement from the database
 
 
 
-### <a name="Stmt.ColumnConverter">func</a> (Stmt) [ColumnConverter](/stmt.go?s=6184:6245#L226)
+### <a name="Stmt.ColumnConverter">func</a> (Stmt) [ColumnConverter](/stmt.go?s=6206:6267#L226)
 ``` go
 func (st Stmt) ColumnConverter(idx int) driver.ValueConverter
 ```
@@ -797,7 +781,7 @@ precision, scale and then convert to a valid sql.Driver value.
 
 
 
-### <a name="Stmt.Exec">func</a> (\*Stmt) [Exec](/stmt.go?s=3256:3328#L131)
+### <a name="Stmt.Exec">func</a> (\*Stmt) [Exec](/stmt.go?s=3278:3350#L131)
 ``` go
 func (st *Stmt) Exec(args []driver.Value) (res driver.Result, err error)
 ```
@@ -807,7 +791,7 @@ Implements the database/sql/Stmt interface
 
 
 
-### <a name="Stmt.ExecContext">func</a> (\*Stmt) [ExecContext](/stmt.go?s=3819:3929#L150)
+### <a name="Stmt.ExecContext">func</a> (\*Stmt) [ExecContext](/stmt.go?s=3841:3951#L150)
 ``` go
 func (st *Stmt) ExecContext(ctx context.Context, namedArgs []driver.NamedValue) (res driver.Result, err error)
 ```
@@ -817,7 +801,7 @@ Implements the database/sql/Stmt interface
 
 
 
-### <a name="Stmt.NumInput">func</a> (Stmt) [NumInput](/stmt.go?s=5492:5521#L202)
+### <a name="Stmt.NumInput">func</a> (Stmt) [NumInput](/stmt.go?s=5514:5543#L202)
 ``` go
 func (st Stmt) NumInput() int
 ```
@@ -826,7 +810,7 @@ NumInput returns the number of expected parameters
 
 
 
-### <a name="Stmt.Query">func</a> (\*Stmt) [Query](/stmt.go?s=4554:4617#L175)
+### <a name="Stmt.Query">func</a> (\*Stmt) [Query](/stmt.go?s=4576:4639#L175)
 ``` go
 func (st *Stmt) Query(args []driver.Value) (driver.Rows, error)
 ```
@@ -835,7 +819,7 @@ Query executes a prepared statement and returns rows.
 
 
 
-### <a name="Stmt.QueryContext">func</a> (\*Stmt) [QueryContext](/stmt.go?s=4960:5061#L186)
+### <a name="Stmt.QueryContext">func</a> (\*Stmt) [QueryContext](/stmt.go?s=4982:5083#L186)
 ``` go
 func (st *Stmt) QueryContext(ctx context.Context, namedArgs []driver.NamedValue) (driver.Rows, error)
 ```
@@ -879,3 +863,10 @@ implement the error interface
 
 
 
+
+
+
+
+
+- - -
+Generated by [godoc2md](http://godoc.org/github.com/davecheney/godoc2md)

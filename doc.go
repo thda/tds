@@ -32,7 +32,7 @@ use the regular database/sql APIs:
 	)
 
 	func main() {
-		cnxStr := "tds://my_user:my_password@dbhost.com:5000/pubs?charset=utf8
+		cnxStr := "tds://my_user:my_password@dbhost.com:5000/pubs?charset=utf8"
 		db, err := sql.Open("tds", connStr)
 		if err != nil {
 			log.Fatal(err)
@@ -68,7 +68,7 @@ It is suggested to raise it to avoid truncation.
 
 Less frequently used ones:
 
-* ssl - Whether or not to use SSL. THe default is not to use ssl.
+* ssl - Whether or not to use SSL. The default is not to use ssl.
 Set to "on" if the server is setup to use ssl.
 * encryptPassword - Can be "yes" to require password encryption,
 "no" to disable it, and "try" to try encrytping password an falling back
@@ -143,7 +143,7 @@ You must cast your database/sql connection as sql.Conn to use this extension.
 
 The following demonstrates how to handle showplan and print messages:
 
-	conn = goConn.(*tds.Conn)
+	conn := goConn.(*tds.Conn)
 
 	// print showplan messages and all
 	conn.SetErrorhandler(func(m tds.SybError) bool {

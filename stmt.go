@@ -43,8 +43,8 @@ func newStmt(ctx context.Context, s *session, query string) (*Stmt, error) {
 		return st, driver.ErrBadConn
 	}
 
-	params := &columns{msg: newMsg(ParamFmt)}
-	wideParams := &columns{msg: newMsg(ParamFmt2), flags: wide}
+	params := &columns{msg: newMsg(ParamFmt), flags: param}
+	wideParams := &columns{msg: newMsg(ParamFmt2), flags: wide | param}
 	st.row = &row{msg: newMsg(Param)}
 
 	// get a statement number
