@@ -128,6 +128,13 @@ func parseDSN(dsn string) (prm connParams, err error) {
 	return prm, nil
 }
 
+// SetErrorhandler allows setting a custom error handler.
+// The function shall accept an SQL Message and return a boolean
+// indicating if this message is indeed a critical error.
+func (c *Conn) SetErrorhandler(fn func(s SybError) bool) {
+	c.IsError = fn
+}
+
 // NewConn returns a TDS session
 func NewConn(dsn string) (*Conn, error) {
 	prm, err := parseDSN(dsn)
@@ -146,18 +153,6 @@ func NewConn(dsn string) (*Conn, error) {
 	return c, nil
 }
 
-// ErrorHandler is a connection which support defineing sybase error handling function.
-type ErrorHandler interface {
-	SetErrorhandler(fn func(s SybError) bool)
-}
-
-// SetErrorhandler allows setting a custom error handler.
-// The function shall accept an SQL Message and return a boolean
-// indicating if this message is indeed a critical error.
-func (c *Conn) SetErrorhandler(fn func(s SybError) bool) {
-	c.session.IsError = fn
-}
-
 // GetEnv return a map of environments variables.
 // The following keys are garanteed to be present:
 //  - server
@@ -172,13 +167,31 @@ func (c Conn) GetEnv() map[string]string {
 	}
 }
 
+// ErrorHandler is a connection which support defines sybase error handling
+type ErrorHandler interface {
+	SetErrorhandler(fn func(s SybError) bool)
+}
+
 // register the driver
-type sybDriver struct{}
+type sybDriver struct {
+	IsError func(s SybError) bool
+}
 
 var sybDriverInstance = &sybDriver{}
 
 func (d *sybDriver) Open(dsn string) (driver.Conn, error) {
-	return NewConn(dsn)
+	conn, err := NewConn(dsn)
+	if d.IsError != nil {
+		conn.SetErrorhandler(d.IsError)
+	}
+	return conn, err
+}
+
+// SetErrorhandler allows setting a custom error handler.
+// The function shall accept an SQL Message and return a boolean
+// indicating if this message is indeed a critical error.
+func (d *sybDriver) SetErrorhandler(fn func(s SybError) bool) {
+	d.IsError = fn
 }
 
 func init() {
