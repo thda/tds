@@ -394,46 +394,46 @@ input:
 
 			cols := rows.Columns()
 
-			if cols == nil {
-				continue input
-			}
-			table.SetHeader(cols)
+			if cols != nil {
+				table.SetHeader(cols)
 
-			vals := make([]driver.Value, len(cols))
-			data := make([]string, len(cols))
-			r := 0
-			for {
-				err = rows.Next(vals)
+				vals := make([]driver.Value, len(cols))
+				data := make([]string, len(cols))
+				r := 0
+				for {
+					err = rows.Next(vals)
 
-				if err == io.EOF {
-					break
-				} else if err != nil {
-					break
+					if err == io.EOF {
+						break
+					} else if err != nil {
+						break
+					}
+					r++
+					for i := 0; i < len(cols); i++ {
+						if vals[i] == nil {
+							vals[i] = "NULL"
+						}
+						// pretty print time/bytes
+						if t, ok := vals[i].(time.Time); ok {
+							vals[i] = t.Format("2006-01-02 15:04:05")
+						}
+						if b, ok := vals[i].([]byte); ok {
+							vals[i] = "0x" + hex.EncodeToString(b)
+						}
+						data[i] = strings.TrimSpace(fmt.Sprint(vals[i]))
+					}
+					table.Append(data)
+					if r%pageSize == 0 {
+						table.Render()
+						table = newTable(w)
+						table.SetHeader(cols)
+					}
 				}
-				r++
-				for i := 0; i < len(cols); i++ {
-					if vals[i] == nil {
-						vals[i] = "NULL"
-					}
-					// pretty print time/bytes
-					if t, ok := vals[i].(time.Time); ok {
-						vals[i] = t.Format("2006-01-02 15:04:05")
-					}
-					if b, ok := vals[i].([]byte); ok {
-						vals[i] = "0x" + hex.EncodeToString(b)
-					}
-					data[i] = strings.TrimSpace(fmt.Sprint(vals[i]))
-				}
-				table.Append(data)
-				if r%pageSize == 0 {
+
+				if len(data) > 0 && len(cols) > 0 {
 					table.Render()
-					table = newTable(w)
-					table.SetHeader(cols)
 				}
-			}
 
-			if len(data) > 0 && len(cols) > 0 {
-				table.Render()
 			}
 
 			// print return status

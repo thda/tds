@@ -68,6 +68,9 @@ type session struct {
 	returnStatus returnStatus
 	sqlMessage   sqlMessage
 
+	// previous token
+	prev token
+
 	messageMap map[byte]netlib.Messager
 
 	// error handling routine
@@ -519,6 +522,7 @@ func (s *session) processResponse(ctx context.Context,
 			// this will fill the result structure, the sqlMessages array, etc
 			switch token(t) {
 			default:
+				s.prev = token(t)
 				if doBreak {
 					return doBreak, nil
 				}
@@ -528,14 +532,11 @@ func (s *session) processResponse(ctx context.Context,
 				err = s.processEnvChange()
 			case ReturnStatus:
 				err = s.processReturnStatus()
-			case DoneProc:
-				err = s.processDone()
-			case DoneInProc:
-				err = s.processDone()
-			case Done:
+			case DoneProc, DoneInProc, Done:
 				// last message for this stream
-				err = s.processDone()
+				err = s.processDone(token(t))
 			}
+			s.prev = token(t)
 
 			// error was found, return now to caller.
 			// Typically processDone returns an error
@@ -602,7 +603,25 @@ func (s *session) processEnvChange() (err error) {
 }
 
 // process the done token's information (row count, error status, final ?)
-func (s *session) processDone() (err error) {
+func (s *session) processDone(t token) (err error) {
+	// ignore most doneInProc tokens
+	if t == DoneInProc && !(s.prev == Row ||
+		s.prev == CmpRow || s.prev == Done ||
+		s.prev == ColumnFmt || s.prev == CmpRowFmt ||
+		s.prev == WideColumnFmt) {
+		return nil
+	}
+
+	// get row count if any
+	if s.done.status&doneCount != 0 ||
+		s.done.status&doneProcCount != 0 ||
+		(s.done.status&doneProc != 0 && s.prev == Done) {
+		// done with doneProc set will contain
+		// the row count for inserts in prepared statements when "send doneinproc" is 0
+		s.res.hasAffectedRows = true
+		s.res.affectedRows = int64(s.done.count)
+	}
+
 	// check if this token indicates an error
 	if s.done.status&doneError != 0 && s.res.lastError == nil {
 		s.res.lastError = errors.New("unknow error reported by done token")
@@ -610,11 +629,6 @@ func (s *session) processDone() (err error) {
 
 	// last bit set
 	s.res.final = s.done.status&doneMoreResults == 0
-	if s.done.status&doneCount != 0 ||
-		s.done.status&doneProcCount != 0 {
-		s.res.hasAffectedRows = true
-		s.res.affectedRows = int64(s.done.count)
-	}
 
 	// return error if found during this message stream.
 	if s.res.final {

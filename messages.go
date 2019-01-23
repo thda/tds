@@ -379,7 +379,7 @@ var defaultReqcapabilities = [...]int{dataLoblocator, reqLangBatch, reqDynBatch,
 	reqDynf, reqCursor, reqBcp, reqRPC, reqLang}
 
 var defaultRescapabilities = [...]int{resNoTdscontrol, resSuppressFmt,
-	resNoxnldata, resNotdsdebug, objectNojava1, resSuppressDoneinproc}
+	resNoxnldata, resNotdsdebug, objectNojava1}
 
 // capabilities token. Tricky one. Stores the connection's capability
 // in an array if bits.
@@ -507,6 +507,7 @@ const (
 	doneFinal       = 0x0000
 	doneMoreResults = 0x0001
 	doneError       = 0x0002
+	doneProc        = 0x0008
 	doneCount       = 0x0010
 	doneProcCount   = 0x0040
 	doneCancel      = 0x0020
