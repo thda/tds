@@ -146,6 +146,11 @@ func NewConn(dsn string) (*Conn, error) {
 	return c, nil
 }
 
+// ErrorHandler is a connection which support defineing sybase error handling function.
+type ErrorHandler interface {
+	SetErrorhandler(fn func(s SybError) bool)
+}
+
 // SetErrorhandler allows setting a custom error handler.
 // The function shall accept an SQL Message and return a boolean
 // indicating if this message is indeed a critical error.

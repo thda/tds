@@ -33,7 +33,7 @@ use the regular database/sql APIs:
 
 	func main() {
 		cnxStr := "tds://my_user:my_password@dbhost.com:5000/pubs?charset=utf8"
-		db, err := sql.Open("tds", connStr)
+		db, err := sql.Open("tds", cnxStr)
 		if err != nil {
 			log.Fatal(err)
 		}
