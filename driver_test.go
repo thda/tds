@@ -68,8 +68,10 @@ func buildurl() string {
 // connect to the database and return it
 func connect(t *testing.T) *sql.DB {
 	db, err := sql.Open("syb", buildurl())
+	db.SetMaxOpenConns(15)
+	db.SetMaxIdleConns(1)
 	if err != nil {
-		t.Error("sql.Open failed:", err.Error())
+		t.Fatal("sql.Open failed:", err.Error())
 		return nil
 	}
 	if err = db.Ping(); err != nil {

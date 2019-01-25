@@ -681,6 +681,7 @@ func TestError(t *testing.T) {
 	if conn == nil {
 		t.Fatal("connect failed")
 	}
+	defer conn.Close()
 
 	_, err := conn.Query("exec bad")
 	if err == nil {
@@ -701,6 +702,7 @@ func TestQueryNoRows(t *testing.T) {
 	if conn == nil {
 		t.Fatal("connect failed")
 	}
+	defer conn.Close()
 
 	var rows *sql.Rows
 	var err error
@@ -717,6 +719,7 @@ func TestQueryManyNullsRow(t *testing.T) {
 	if conn == nil {
 		t.Fatal("connect failed")
 	}
+	defer conn.Close()
 
 	var row *sql.Row
 	var err error
@@ -734,6 +737,7 @@ func TestAffectedRows(t *testing.T) {
 	if conn == nil {
 		t.Fatal("connect failed")
 	}
+	defer conn.Close()
 
 	res, err := conn.Exec("create table #foo (bar int)")
 	if err != nil {
@@ -798,6 +802,7 @@ func TestIdentity(t *testing.T) {
 	if conn == nil {
 		t.Fatal("connect failed")
 	}
+	defer conn.Close()
 
 	res, err := conn.Exec("create table #foo (bar int identity, baz int)")
 	if err != nil {
@@ -851,6 +856,7 @@ func TestDateTimeParam(t *testing.T) {
 	if conn == nil {
 		t.Fatal("connect failed")
 	}
+	defer conn.Close()
 	type testStruct struct {
 		t time.Time
 	}
@@ -894,6 +900,7 @@ func TestIgnoreEmptyResults(t *testing.T) {
 	if conn == nil {
 		t.Fatal("connect failed")
 	}
+	defer conn.Close()
 	rows, err := conn.Query(`set nocount on
 	select 2`)
 	if err != nil {
@@ -1011,6 +1018,7 @@ func TestNextResultSet(t *testing.T) {
 	if conn == nil {
 		t.Fatal("connect failed")
 	}
+	defer conn.Close()
 	rows, err := conn.QueryContext(context.Background(), `select 1
 	select 2`)
 	if err != nil {
@@ -1097,7 +1105,7 @@ func TestColumnTypeIntrospection(t *testing.T) {
 	for _, tt := range tests {
 		rows, err := conn.Query("select " + tt.expr)
 		if err != nil {
-			t.Fatalf("Query failed with unexpected error %s", err)
+			t.Fatalf("Query select "+tt.expr+" failed with unexpected error %s", err)
 		}
 		ct, err := rows.ColumnTypes()
 		if err != nil {
@@ -1130,6 +1138,7 @@ func TestColumnTypeIntrospection(t *testing.T) {
 		if ct[0].ScanType() != tt.reflType {
 			t.Errorf("Expected ScanType %v but got %v for %s", tt.reflType, ct[0].ScanType(), tt.expr)
 		}
+		rows.Close()
 	}
 }
 

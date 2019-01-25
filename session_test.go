@@ -13,6 +13,7 @@ func TestSimpleExec(t *testing.T) {
 	if db == nil {
 		return
 	}
+	defer db.Close()
 	res, err := db.simpleExec(context.Background(), "set textsize 5000")
 	if err != nil {
 		t.Error("Conn.simpleExec failed:", err.Error())
@@ -29,6 +30,7 @@ func TestSingleValue(t *testing.T) {
 	if db == nil {
 		return
 	}
+	defer db.Close()
 	res, err := db.SelectValue(context.Background(), "select 1")
 	if err != nil {
 		t.Error("Conn.selectValue failed:", err.Error())
@@ -50,6 +52,7 @@ func TestTransactions(t *testing.T) {
 	if db == nil {
 		return
 	}
+	defer db.Close()
 	tx, err := db.Begin()
 	if err != nil {
 		t.Error("Conn.Begin failed:", err.Error())
@@ -142,6 +145,7 @@ func TestIsolationLevels(t *testing.T) {
 	if db == nil {
 		return
 	}
+	defer db.Close()
 
 	for _, value := range isolationTests {
 		tx, err := db.BeginTx(context.Background(), value.input)

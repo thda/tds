@@ -113,7 +113,7 @@ func newSession(prm connParams) (s *session, err error) {
 	// connect
 	if s.c, err = dial(prm); err != nil {
 		s.isBad = true
-		return nil, err
+		return s, err
 	}
 
 	// init netlib buffer
@@ -130,7 +130,7 @@ func newSession(prm connParams) (s *session, err error) {
 			return newSession(prm)
 		}
 		s.isBad = true
-		return nil, err
+		return s, err
 	}
 
 	return s, nil
@@ -337,7 +337,7 @@ var isolationLevelMap = []int{isolationReadCommited, isolationReadUncommited,
 // BeginTx implements driver.ConnBeginTx interface
 func (s *session) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
 	if opts.ReadOnly {
-		return nil, ErrNoReadOnly
+		return s, ErrNoReadOnly
 	}
 	if sql.IsolationLevel(opts.Isolation) != sql.LevelDefault {
 		if int(opts.Isolation) > len(isolationLevelMap) {
