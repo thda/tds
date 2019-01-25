@@ -341,12 +341,12 @@ func (s *session) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx
 	}
 	if sql.IsolationLevel(opts.Isolation) != sql.LevelDefault {
 		if int(opts.Isolation) > len(isolationLevelMap) {
-			return nil, ErrInvalidIsolationLevel
+			return s, ErrInvalidIsolationLevel
 		}
 		level := isolationLevelMap[int(opts.Isolation)]
 
 		if level == isolationNotImplemented {
-			return nil, ErrInvalidIsolationLevel
+			return s, ErrInvalidIsolationLevel
 		}
 
 		// send the option change command to set isolation level
@@ -355,13 +355,13 @@ func (s *session) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx
 
 		if err := s.b.Send(ctx, netlib.Normal, &optCmd); err != nil {
 			s.isBad = true
-			return nil, s.checkErr(err, "tds: isolation level set failed", false)
+			return s, s.checkErr(err, "tds: isolation level set failed", false)
 		}
 
 		_, err := s.processResponse(ctx, map[byte]netlib.Messager{}, false)
 		if err = s.checkErr(err, "tds: isolation level set failed", true); err != nil {
 			s.isBad = true
-			return nil, err
+			return s, err
 		}
 	}
 	_, err := s.simpleExec(ctx, `begin tran
@@ -404,7 +404,7 @@ func (s *session) Ping(ctx context.Context) error {
 // The aim is to use language queries when no parameters are given
 func (s *session) Query(query string, args []driver.Value) (driver.Rows, error) {
 	if len(args) != 0 {
-		return nil, driver.ErrSkip
+		return &Rows{}, driver.ErrSkip
 	}
 	return s.simpleQuery(nil, query)
 }
@@ -413,20 +413,20 @@ func (s *session) Query(query string, args []driver.Value) (driver.Rows, error) 
 func (s *session) QueryContext(ctx context.Context, query string,
 	namedArgs []driver.NamedValue) (driver.Rows, error) {
 	if len(namedArgs) != 0 {
-		return nil, driver.ErrSkip
+		return &Rows{}, driver.ErrSkip
 	}
 	return s.simpleQuery(ctx, query)
 }
 
 func (s *session) simpleQuery(ctx context.Context, query string) (rows *Rows, err error) {
 	if s.isBad {
-		return nil, driver.ErrBadConn
+		return &Rows{}, driver.ErrBadConn
 	}
 
 	// send query
 	if err := s.b.Send(ctx, netlib.Normal, &language{msg: newMsg(Language), query: query}); err != nil {
 		s.isBad = true
-		return nil, s.checkErr(err, "tds: query send failed", false)
+		return &Rows{}, s.checkErr(err, "tds: query send failed", false)
 	}
 	s.clearResult()
 
@@ -437,7 +437,7 @@ func (s *session) simpleQuery(ctx context.Context, query string) (rows *Rows, er
 // The aim is to use language queries when no parameters are given
 func (s *session) Exec(query string, args []driver.Value) (driver.Result, error) {
 	if len(args) != 0 {
-		return nil, driver.ErrSkip
+		return &Result{}, driver.ErrSkip
 	}
 
 	return s.simpleExec(nil, query)
@@ -447,7 +447,7 @@ func (s *session) Exec(query string, args []driver.Value) (driver.Result, error)
 func (s *session) ExecContext(ctx context.Context, query string,
 	namedArgs []driver.NamedValue) (driver.Result, error) {
 	if len(namedArgs) != 0 {
-		return nil, driver.ErrSkip
+		return &Result{}, driver.ErrSkip
 	}
 
 	return s.simpleExec(ctx, query)
@@ -455,13 +455,13 @@ func (s *session) ExecContext(ctx context.Context, query string,
 
 func (s *session) simpleExec(ctx context.Context, query string) (res *Result, err error) {
 	if s.isBad {
-		return nil, driver.ErrBadConn
+		return &Result{}, driver.ErrBadConn
 	}
 
 	// send query
 	rows, err := s.simpleQuery(ctx, query)
 	if err = s.checkErr(err, "tds: exec failed", true); err != nil {
-		return nil, err
+		return &Result{}, err
 	}
 
 	rows.Close()
@@ -471,7 +471,7 @@ func (s *session) simpleExec(ctx context.Context, query string) (res *Result, er
 // Prepare prepares a statement and returns it
 func (s *session) Prepare(query string) (driver.Stmt, error) {
 	if s.isBad {
-		return nil, driver.ErrBadConn
+		return &Stmt{}, driver.ErrBadConn
 	}
 	return newStmt(nil, s, query)
 }
@@ -479,7 +479,7 @@ func (s *session) Prepare(query string) (driver.Stmt, error) {
 // Prepare prepares a statement and returns it
 func (s *session) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
 	if s.isBad {
-		return nil, driver.ErrBadConn
+		return &Stmt{}, driver.ErrBadConn
 	}
 	return newStmt(ctx, s, query)
 }

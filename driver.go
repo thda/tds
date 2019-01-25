@@ -138,19 +138,13 @@ func (c *Conn) SetErrorhandler(fn func(s SybError) bool) {
 // NewConn returns a TDS session
 func NewConn(dsn string) (*Conn, error) {
 	prm, err := parseDSN(dsn)
+
 	if err != nil {
-		return nil, err
+		return &Conn{session: &session{}}, err
 	}
 	s, err := newSession(prm)
-	if err != nil {
-		return nil, err
-	}
-	if s.isBad {
-		return nil, driver.ErrBadConn
-	}
-
 	c := &Conn{session: s}
-	return c, nil
+	return c, err
 }
 
 // GetEnv return a map of environments variables.
