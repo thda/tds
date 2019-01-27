@@ -140,7 +140,7 @@ func NewConn(dsn string) (*Conn, error) {
 	prm, err := parseDSN(dsn)
 
 	if err != nil {
-		return &Conn{session: &session{}}, err
+		return &emptyConn, err
 	}
 	s, err := newSession(prm)
 	c := &Conn{session: s}
@@ -194,3 +194,11 @@ func init() {
 }
 
 var _ driver.Driver = (*sybDriver)(nil)
+
+// empty objects to return on error
+// Make sure the session is not nil to avoid nil pointers
+var emptySession = session{}
+var emptyConn = Conn{session: &emptySession}
+var emptyRows = Rows{s: &emptySession}
+var emptyResult = Result{s: &emptySession}
+var emptyStmt = Stmt{s: &emptySession}

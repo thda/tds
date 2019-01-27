@@ -197,7 +197,7 @@ func TestBeginTranError(t *testing.T) {
 	ctx := context.Background()
 	opts := driver.TxOptions{Isolation: driver.IsolationLevel(sql.LevelSerializable)}
 	_, err := conn.BeginTx(ctx, opts)
-	if err == nil || conn.isBad == false {
+	if err == nil || conn.valid {
 		t.Errorf("begin should fail as a bad connection, err=%v", err)
 	}
 }
@@ -213,7 +213,7 @@ func TestCommitTranError(t *testing.T) {
 	conn.c.Close()
 
 	err := conn.Commit()
-	if err == nil || conn.isBad == false {
+	if err == nil || conn.valid {
 		t.Errorf("begin should fail as a bad connection, err=%v", err)
 	}
 }
@@ -229,13 +229,16 @@ func TestRollbackTranError(t *testing.T) {
 	conn.c.Close()
 
 	err := conn.Rollback()
-	if err == nil || conn.isBad == false {
+	if err == nil || conn.valid {
 		t.Errorf("begin should fail as a bad connection, err=%v", err)
 	}
 }
 
 func TestBeginTxtReadOnlyNotSupported(t *testing.T) {
 	conn := connect(t)
+	if conn == nil {
+		t.Fatal("connect failed")
+	}
 	defer conn.Close()
 	opts := &sql.TxOptions{ReadOnly: true}
 	_, err := conn.BeginTx(context.Background(), opts)

@@ -40,7 +40,7 @@ var isError = func(s SybError) bool {
 // sends queries, processes answers
 // It also embeds the response/query structs
 type session struct {
-	isBad       bool
+	valid       bool
 	charConvert bool
 	res         *Result // response info
 
@@ -112,7 +112,6 @@ func newSession(prm connParams) (s *session, err error) {
 
 	// connect
 	if s.c, err = dial(prm); err != nil {
-		s.isBad = true
 		return s, err
 	}
 
@@ -129,7 +128,6 @@ func newSession(prm connParams) (s *session, err error) {
 			prm.encryptPassword = "no"
 			return newSession(prm)
 		}
-		s.isBad = true
 		return s, err
 	}
 
@@ -195,7 +193,7 @@ loginResponse:
 		}
 	}
 
-	if err = s.checkErr(err, "tds: loginAck receive failed", true); err != nil {
+	if err != nil && err != io.EOF {
 		return err
 	}
 
@@ -262,6 +260,8 @@ loginResponse:
 	if loginAck.ack != 5 {
 		return errors.New("tds: login failed. Please check username/password")
 	}
+	// we are logged in
+	s.valid = true
 
 	// keep the server name provided in the loginAck
 	s.serverType = loginAck.server
@@ -277,11 +277,12 @@ loginResponse:
 }
 
 // checkErr check if the given error is fatal.
-// If so, mark the connection as bad.
+// If the error is not a sybase error message,
+// but another unknown error, mark the connection as bad.
 // If the root cause is EOF or a context cancelled,
 // simply rethrow it so that driver can catch them.
 func (s *session) checkErr(err error, msg string, ignoreEOF bool) error {
-	if s.isBad {
+	if !s.valid {
 		return driver.ErrBadConn
 	}
 	// fastpath for io.EOF
@@ -296,7 +297,12 @@ func (s *session) checkErr(err error, msg string, ignoreEOF bool) error {
 	case context.Canceled, context.DeadlineExceeded:
 		return err
 	}
-	s.isBad = true
+
+	// if the error is not a standard sybase message,
+	// the connection is invalid
+	if _, ok := err.(SybError); !ok {
+		s.valid = false
+	}
 	return fmt.Errorf("%s: %s", msg, err)
 }
 
@@ -354,13 +360,13 @@ func (s *session) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx
 			option: optionIsolationLevel, value: level}
 
 		if err := s.b.Send(ctx, netlib.Normal, &optCmd); err != nil {
-			s.isBad = true
+			s.valid = false
 			return s, s.checkErr(err, "tds: isolation level set failed", false)
 		}
 
 		_, err := s.processResponse(ctx, map[byte]netlib.Messager{}, false)
 		if err = s.checkErr(err, "tds: isolation level set failed", true); err != nil {
-			s.isBad = true
+			s.valid = false
 			return s, err
 		}
 	}
@@ -383,7 +389,7 @@ func (s *session) Rollback() error {
 
 // Ping implements driver.Pinger interface
 func (s *session) Ping(ctx context.Context) error {
-	if s.isBad {
+	if !s.valid {
 		return driver.ErrBadConn
 	}
 
@@ -404,7 +410,7 @@ func (s *session) Ping(ctx context.Context) error {
 // The aim is to use language queries when no parameters are given
 func (s *session) Query(query string, args []driver.Value) (driver.Rows, error) {
 	if len(args) != 0 {
-		return &Rows{}, driver.ErrSkip
+		return nil, driver.ErrSkip
 	}
 	return s.simpleQuery(nil, query)
 }
@@ -413,20 +419,20 @@ func (s *session) Query(query string, args []driver.Value) (driver.Rows, error) 
 func (s *session) QueryContext(ctx context.Context, query string,
 	namedArgs []driver.NamedValue) (driver.Rows, error) {
 	if len(namedArgs) != 0 {
-		return &Rows{}, driver.ErrSkip
+		return nil, driver.ErrSkip
 	}
 	return s.simpleQuery(ctx, query)
 }
 
 func (s *session) simpleQuery(ctx context.Context, query string) (rows *Rows, err error) {
-	if s.isBad {
-		return &Rows{}, driver.ErrBadConn
+	if !s.valid {
+		return &emptyRows, driver.ErrBadConn
 	}
 
 	// send query
 	if err := s.b.Send(ctx, netlib.Normal, &language{msg: newMsg(Language), query: query}); err != nil {
-		s.isBad = true
-		return &Rows{}, s.checkErr(err, "tds: query send failed", false)
+		s.valid = false
+		return &emptyRows, s.checkErr(err, "tds: query send failed", false)
 	}
 	s.clearResult()
 
@@ -437,7 +443,7 @@ func (s *session) simpleQuery(ctx context.Context, query string) (rows *Rows, er
 // The aim is to use language queries when no parameters are given
 func (s *session) Exec(query string, args []driver.Value) (driver.Result, error) {
 	if len(args) != 0 {
-		return &Result{}, driver.ErrSkip
+		return &emptyResult, driver.ErrSkip
 	}
 
 	return s.simpleExec(nil, query)
@@ -447,21 +453,21 @@ func (s *session) Exec(query string, args []driver.Value) (driver.Result, error)
 func (s *session) ExecContext(ctx context.Context, query string,
 	namedArgs []driver.NamedValue) (driver.Result, error) {
 	if len(namedArgs) != 0 {
-		return &Result{}, driver.ErrSkip
+		return &emptyResult, driver.ErrSkip
 	}
 
 	return s.simpleExec(ctx, query)
 }
 
 func (s *session) simpleExec(ctx context.Context, query string) (res *Result, err error) {
-	if s.isBad {
-		return &Result{}, driver.ErrBadConn
+	if !s.valid {
+		return &emptyResult, driver.ErrBadConn
 	}
 
 	// send query
 	rows, err := s.simpleQuery(ctx, query)
 	if err = s.checkErr(err, "tds: exec failed", true); err != nil {
-		return &Result{}, err
+		return &emptyResult, err
 	}
 
 	rows.Close()
@@ -470,16 +476,16 @@ func (s *session) simpleExec(ctx context.Context, query string) (res *Result, er
 
 // Prepare prepares a statement and returns it
 func (s *session) Prepare(query string) (driver.Stmt, error) {
-	if s.isBad {
-		return &Stmt{}, driver.ErrBadConn
+	if !s.valid {
+		return &emptyStmt, driver.ErrBadConn
 	}
 	return newStmt(nil, s, query)
 }
 
 // Prepare prepares a statement and returns it
 func (s *session) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
-	if s.isBad {
-		return &Stmt{}, driver.ErrBadConn
+	if !s.valid {
+		return &emptyStmt, driver.ErrBadConn
 	}
 	return newStmt(ctx, s, query)
 }
@@ -489,7 +495,7 @@ func (s *session) SelectValue(ctx context.Context, query string) (value interfac
 	// send query
 	rows, err := s.simpleQuery(ctx, query)
 	if err != nil {
-		return 0, s.checkErr(err, "tds: select value failed", false)
+		return nil, s.checkErr(err, "tds: select value failed", false)
 	}
 	defer rows.Close()
 

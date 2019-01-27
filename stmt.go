@@ -39,7 +39,7 @@ var idPool = sync.Pool{
 // newStmt returns a new result set and fetch the headers
 func newStmt(ctx context.Context, s *session, query string) (*Stmt, error) {
 	st := &Stmt{s: s, row: &row{}, ctx: ctx}
-	if s.isBad {
+	if !s.valid {
 		return st, driver.ErrBadConn
 	}
 
@@ -110,7 +110,7 @@ func newStmt(ctx context.Context, s *session, query string) (*Stmt, error) {
 
 // send sends the execute to the server
 func (st *Stmt) send(ctx context.Context, args []driver.Value) (err error) {
-	if st.s.isBad {
+	if !st.s.valid {
 		return driver.ErrBadConn
 	}
 
@@ -131,7 +131,7 @@ func (st *Stmt) send(ctx context.Context, args []driver.Value) (err error) {
 func (st *Stmt) Exec(args []driver.Value) (res driver.Result, err error) {
 	// send the parameters and the dynamic token
 	if err = st.send(st.ctx, args[:]); err != nil {
-		return &Result{}, st.s.checkErr(err, "tds: send failed while execing", false)
+		return &emptyResult, st.s.checkErr(err, "tds: send failed while execing", false)
 	}
 
 	// process the server response
@@ -149,7 +149,7 @@ func (st *Stmt) Exec(args []driver.Value) (res driver.Result, err error) {
 // Implements the database/sql/Stmt interface
 func (st *Stmt) ExecContext(ctx context.Context, namedArgs []driver.NamedValue) (res driver.Result, err error) {
 	if len(namedArgs) != len(st.values) {
-		return &Result{}, fmt.Errorf("tds: ExecContext, invalid arg count")
+		return &emptyResult, fmt.Errorf("tds: ExecContext, invalid arg count")
 	}
 	for i := 0; i < len(namedArgs); i++ {
 		st.values[i] = namedArgs[i].Value
@@ -157,7 +157,7 @@ func (st *Stmt) ExecContext(ctx context.Context, namedArgs []driver.NamedValue) 
 
 	// send the parameters and the dynamic token
 	if err = st.send(ctx, st.values[:]); err != nil {
-		return &Result{}, st.s.checkErr(err, "tds: send failed while execing", false)
+		return &emptyResult, st.s.checkErr(err, "tds: send failed while execing", false)
 	}
 
 	// process the server response
@@ -175,7 +175,7 @@ func (st *Stmt) ExecContext(ctx context.Context, namedArgs []driver.NamedValue) 
 func (st *Stmt) Query(args []driver.Value) (driver.Rows, error) {
 	// send the parameters and the dynamic token
 	if err := st.send(st.ctx, args); err != nil {
-		return &Rows{}, st.s.checkErr(err, "tds: send failed while querying", false)
+		return &emptyRows, st.s.checkErr(err, "tds: send failed while querying", false)
 	}
 
 	rows, err := newRow(st.ctx, st.s)
@@ -191,7 +191,7 @@ func (st *Stmt) QueryContext(ctx context.Context, namedArgs []driver.NamedValue)
 
 	// send the parameters and the dynamic token
 	if err := st.send(ctx, args); err != nil {
-		return &Rows{}, st.s.checkErr(err, "tds: send failed while querying", false)
+		return &emptyRows, st.s.checkErr(err, "tds: send failed while querying", false)
 	}
 
 	rows, err := newRow(ctx, st.s)

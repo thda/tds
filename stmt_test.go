@@ -968,13 +968,13 @@ func TestSendQueryErrors(t *testing.T) {
 
 	// should fail because connection is closed
 	_, err = stmt.Query([]driver.Value{})
-	if err == nil || conn.isBad == false {
+	if err == nil || conn.valid {
 		t.Fail()
 	}
 
 	// should fail because connection is closed
 	_, err = stmt.Query([]driver.Value{int64(1)})
-	if err == nil || conn.isBad == false {
+	if err == nil || conn.valid {
 		t.Fail()
 	}
 }
@@ -1002,13 +1002,13 @@ func TestSendExecErrors(t *testing.T) {
 
 	// should fail because connection is closed
 	_, err = stmt.Exec([]driver.Value{})
-	if err == nil || conn.isBad == false {
+	if err == nil || conn.valid {
 		t.Fatal("exec should fail", err)
 	}
 
 	// should fail because connection is closed
 	_, err = stmt.Exec([]driver.Value{int64(1)})
-	if err == nil || conn.isBad == false {
+	if err == nil || conn.valid {
 		t.Fail()
 	}
 }
