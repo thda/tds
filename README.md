@@ -3,10 +3,6 @@
 # tds
 `import "github.com/thda/tds"`
 
-* [Overview](#pkg-overview)
-* [Index](#pkg-index)
-* [Subdirectories](#pkg-subdirectories)
-
 ## <a name="pkg-overview">Overview</a>
 Package tds is a pure Go Sybase ASE/IQ/RS driver for the database/sql package.
 

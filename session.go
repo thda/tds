@@ -309,6 +309,11 @@ func (s *session) checkErr(err error, msg string, ignoreEOF bool) error {
 // Close terminates the session
 // by sending logout message and closing tcp connection.
 func (s *session) Close() error {
+	// no connection
+	if s.c == nil {
+		s.valid = false
+		return nil
+	}
 	defer s.c.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(),
@@ -342,6 +347,11 @@ var isolationLevelMap = []int{isolationReadCommited, isolationReadUncommited,
 
 // BeginTx implements driver.ConnBeginTx interface
 func (s *session) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
+	// connection is bad
+	if !s.valid {
+		return s, driver.ErrBadConn
+	}
+
 	if opts.ReadOnly {
 		return s, ErrNoReadOnly
 	}
