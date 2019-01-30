@@ -233,7 +233,7 @@ loginResponse:
 		}
 		ciphertext, err := rsa.EncryptOAEP(sha1.New(), rand.Reader, &pk, message, []byte{})
 		if err != nil {
-			return fmt.Errorf("tds: login failed. Cannot encrypt password: %s", err)
+			return ErrUnsupportedPassWordEncrytion
 		}
 
 		// send the encrypted password
