@@ -77,7 +77,8 @@ func parseDSN(dsn string) (prm connParams, err error) {
 	prm.writeTimeout, err = strconv.Atoi(values.Get("writeTimeout"))
 
 	// get password encryption method
-	if values.Get("encryptPassword") == "" {
+	prm.encryptPassword = values.Get("encryptPassword")
+	if prm.encryptPassword == "" {
 		prm.encryptPassword = "try"
 	}
 
