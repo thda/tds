@@ -223,8 +223,14 @@ loginResponse:
 		}
 
 		// nonce introduces randomness to avoid replay attacks
-		nonce := p.data[2].([]byte)
-		message := append(nonce, []byte(prm.password)...)
+		var message []byte
+		if len(p.data) > 2 {
+			nonce := p.data[2].([]byte)
+			message = append(nonce, []byte(prm.password)...)
+		} else {
+			// no nonce
+			message = []byte(prm.password)
+		}
 		ciphertext, err := rsa.EncryptOAEP(sha1.New(), rand.Reader, &pk, message, []byte{})
 		if err != nil {
 			return fmt.Errorf("tds: login failed. Cannot encrypt password: %s", err)
