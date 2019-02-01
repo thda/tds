@@ -228,8 +228,8 @@ loginResponse:
 			nonce := p.data[2].([]byte)
 			message = append(nonce, []byte(prm.password)...)
 		} else {
-			// no nonce
-			message = []byte(prm.password)
+			// no nonce, do not know this encryption method
+			return ErrUnsupportedPassWordEncrytion
 		}
 		ciphertext, err := rsa.EncryptOAEP(sha1.New(), rand.Reader, &pk, message, []byte{})
 		if err != nil {

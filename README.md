@@ -3,7 +3,6 @@
 # tds
 `import "github.com/thda/tds"`
 
-## <a name="pkg-overview">Overview</a>
 Package tds is a pure Go Sybase ASE/IQ/RS driver for the database/sql package.
 
 ### Status
@@ -165,8 +164,7 @@ The following demonstrates how to handle showplan and print messages:
 
 ### Limitations
 As of now the driver does not support bulk insert and named parameters.
-Password encryption only works for Sybase ASE > 15.0.1, the old cypher is
-not known.
+Password encryption only works for Sybase ASE > 15.5.
 
 ### Testing
 You can use stmt_test.go and session_test.go for sample usage, as follows:
