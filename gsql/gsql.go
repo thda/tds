@@ -4,8 +4,7 @@ package main
 import (
 	"bufio"
 	"context"
-	"database/sql/driver"
-	"encoding/hex"
+	"database/sql"
 	"flag"
 	"fmt"
 	"io"
@@ -16,9 +15,9 @@ import (
 	"regexp"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/thda/tds"
+	"github.com/xo/tblfmt"
 
 	"github.com/chzyer/readline"
 	"github.com/thda/tablewriter"
@@ -181,7 +180,7 @@ func newFileBatchReader(inputFile string, w *bufio.Writer) (r *fileBatchReader, 
 type readLineBatchReader struct {
 	*readline.Instance
 	server string
-	conn   *tds.Conn
+	conn   *sql.DB
 }
 
 func (r *readLineBatchReader) ReadBatch(terminator string) (batch string, err error) {
@@ -189,27 +188,16 @@ func (r *readLineBatchReader) ReadBatch(terminator string) (batch string, err er
 	lineNo := 1
 	for {
 		var prompt string
-		switch r.conn.GetEnv()["serverType"] {
-		case "ASE", "sql server":
-			if r.server == "" {
-				serverQuery, err := r.conn.SelectValue(context.Background(), "select @@servername")
-				if err == nil {
-					r.server = serverQuery.(string)
-				}
-			}
-			prompt = fmt.Sprintf("%s.%s %d $ ", r.server, r.conn.GetEnv()["database"], lineNo)
-		case "SQL Anywhere":
-			if r.server == "" {
-				serverQuery, err := r.conn.SelectValue(context.Background(), "select @@servername")
-				if err == nil {
-					r.server = serverQuery.(string)
-				}
-			}
-			prompt = fmt.Sprintf("%s %d $ ", r.server, lineNo)
-		default:
-			r.server = r.conn.GetEnv()["server"]
+		row := r.conn.QueryRow("select @@servername")
+		if err == nil {
+			row.Scan(&r.server)
+		}
+
+		prompt = fmt.Sprintf("%d $ ", lineNo)
+		if r.server != "" {
 			prompt = fmt.Sprintf("%s %d $ ", r.server, lineNo)
 		}
+
 		r.SetPrompt(prompt)
 		line, err := r.Readline()
 
@@ -233,7 +221,7 @@ func (r *readLineBatchReader) ReadBatch(terminator string) (batch string, err er
 }
 
 // get an instance of readline with the proper settings
-func newReadLineBatchReader(conn *tds.Conn) (SQLBatchReader, error) {
+func newReadLineBatchReader(conn *sql.DB) (SQLBatchReader, error) {
 	usr, _ := user.Current()
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt:                 "$ ",
@@ -271,14 +259,14 @@ func main() {
 	var w *bufio.Writer
 
 	// connect
-	conn, err := tds.NewConn(buildCnxStr())
+	conn, err := sql.Open("tds", buildCnxStr())
 	if err != nil {
 		fmt.Println("failed to connect: ", err)
 		os.Exit(1)
 	}
 
 	// print showplan messages and all
-	conn.SetErrorhandler(func(m tds.SybError) bool {
+	conn.Driver().(tds.ErrorHandler).SetErrorhandler(func(m tds.SybError) bool {
 		if m.Severity == 10 {
 			if (m.MsgNumber >= 3612 && m.MsgNumber <= 3615) ||
 				(m.MsgNumber >= 6201 && m.MsgNumber <= 6299) ||
@@ -340,17 +328,6 @@ func main() {
 input:
 	for {
 		batch, err = r.ReadBatch(terminator)
-		switch batch {
-		case "\\b":
-			conn.Begin()
-			continue input
-		case "\\c":
-			conn.Commit()
-			continue input
-		case "\\r":
-			conn.Rollback()
-			continue input
-		}
 		if err != nil {
 			if err != io.EOF {
 				fmt.Println(err)
@@ -374,7 +351,7 @@ input:
 		}()
 
 		// send query
-		rows, err := conn.QueryContext(ctx, batch, nil)
+		rows, err := conn.QueryContext(ctx, batch)
 		select {
 		case <-done:
 		case done <- struct{}{}:
@@ -388,89 +365,7 @@ input:
 			continue input
 		}
 
-		for {
-			// init output table
-			table := newTable(w)
-
-			cols := rows.Columns()
-
-			if cols != nil {
-				table.SetHeader(cols)
-
-				vals := make([]driver.Value, len(cols))
-				data := make([]string, len(cols))
-				r := 0
-				for {
-					err = rows.Next(vals)
-
-					if err == io.EOF {
-						break
-					} else if err != nil {
-						break
-					}
-					r++
-					for i := 0; i < len(cols); i++ {
-						if vals[i] == nil {
-							vals[i] = "NULL"
-						}
-						// pretty print time/bytes
-						if t, ok := vals[i].(time.Time); ok {
-							vals[i] = t.Format("2006-01-02 15:04:05")
-						}
-						if b, ok := vals[i].([]byte); ok {
-							vals[i] = "0x" + hex.EncodeToString(b)
-						}
-						data[i] = strings.TrimSpace(fmt.Sprint(vals[i]))
-					}
-					table.Append(data)
-					if r%pageSize == 0 {
-						table.Render()
-						table = newTable(w)
-						table.SetHeader(cols)
-					}
-				}
-
-				if len(data) > 0 && len(cols) > 0 {
-					table.Render()
-				}
-
-			}
-
-			// print return status
-			affected, okAffected := rows.(*tds.Rows).AffectedRows()
-			returnStatus, okReturnStatus := rows.(*tds.Rows).ReturnStatus()
-			var display string
-
-			if okAffected {
-				if affected > 1 {
-					display = fmt.Sprintf("%d rows affected", affected)
-				} else {
-					display = fmt.Sprintf("%d row affected", affected)
-				}
-			}
-
-			if okReturnStatus {
-				if okAffected {
-					display += ", "
-				}
-				display += fmt.Sprintf("return status = %d", returnStatus)
-			}
-
-			if okReturnStatus || okAffected {
-				fmt.Fprintln(w, "("+display+")")
-			}
-
-			w.Flush()
-
-			// check for next result set
-			if rows.(*tds.Rows).HasNextResultSet() {
-				if err = rows.(*tds.Rows).NextResultSet(); err != nil {
-					return
-				}
-				fmt.Println()
-			} else {
-				break
-			}
-		}
+		tblfmt.EncodeAll(w, rows, map[string]string{"format": "aligned", "border": "2",
+			"unicode_border_linestyle": "single", "linestyle": "unicode"})
 	}
 }

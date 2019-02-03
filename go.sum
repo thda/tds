@@ -10,6 +10,8 @@ github.com/mattn/go-runewidth v0.0.4 h1:2BvfKmzob6Bmd4YsL0zygOqfdFnK7GR4QL06Do4/
 github.com/mattn/go-runewidth v0.0.4/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
 github.com/thda/tablewriter v0.0.0-20180207080603-aedbbc0800df h1:KkSKeOBg0Uc7XypdKISs8E2e1SudQntsAa+oQEA+rqs=
 github.com/thda/tablewriter v0.0.0-20180207080603-aedbbc0800df/go.mod h1:xmso0lisU90iUAMdJdRhVEClVoy6lXumd0SDZyv5Mek=
+github.com/xo/tblfmt v0.0.0-20190131174246-1761efe18ea6 h1:Kjzi7nOWab/tSEkO0+wnJKIz6PIjcxUOQjkrMguPeYI=
+github.com/xo/tblfmt v0.0.0-20190131174246-1761efe18ea6/go.mod h1:bSA7wykaIHZTJICoVhnHeBrORU6M05xMBQxrp9PfUog=
 golang.org/x/net v0.0.0-20190119204137-ed066c81e75e h1:MDa3fSUp6MdYHouVmCCNz/zaH2a6CRcxY3VhT/K3C5Q=
 golang.org/x/net v0.0.0-20190119204137-ed066c81e75e/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/sys v0.0.0-20190124100055-b90733256f2e h1:3GIlrlVLfkoipSReOMNAgApI0ajnalyLa/EZHHca/XI=
