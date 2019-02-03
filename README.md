@@ -1,5 +1,3 @@
-
-
 # tds
 `import "github.com/thda/tds"`
 
@@ -10,9 +8,12 @@ This is a beta release. This driver has yet to be battle tested on
 production workload. Version 1.0 will be released
 when this driver will be production ready
 
-### Requirements
-* Sybase ASE 12.5 or higher
-* go 1.8 or higher.
+Requirements
+
+
+		* Sybase ASE 12.5 or higher
+	
+	  * go 1.8 or higher.
 
 ### Installation
 Package installation is done via go-get:
@@ -53,32 +54,42 @@ The connection string is pretty standard and uses the URL format:
 ### Connection parameters
 The most common ones are:
 
-* username - the database server login. Mandatory.
-* password - The login's password. Mandatory.
-* host - The host to connect to. Mandatory.
-* port - The port to bind to. Mandatory.
-* database - The database to use. You will connect to the login's
-default database if not specified.
-* charset - The client's character set. Default to utf8.
-Please refer to the character sets section.
-* readTimeout - read timeout in seconds.
-* writeTimeout - write timeout in seconds.
-* textSize - max size of textsize fields in bytes.
-It is suggested to raise it to avoid truncation.
+
+		* username - the database server login. Mandatory.
+	
+		* password - The login's password. Mandatory.
+	
+		* host - The host to connect to. Mandatory.
+	
+		* port - The port to bind to. Mandatory.
+	
+	  * database - The database to use. You will connect to the login's
+			default database if not specified.
+	
+	  * charset - The client's character set. Default to utf8.
+			Please refer to the character sets section.
+	
+		* readTimeout - read timeout in seconds.
+	
+		* writeTimeout - write timeout in seconds.
+	
+	  * textSize - max size of textsize fields in bytes.
+	    It is suggested to raise it to avoid truncation.
 
 Less frequently used ones:
 
-* ssl - Whether or not to use SSL. The default is not to use ssl.
-Set to "on" if the server is setup to use ssl.
-* encryptPassword - Can be "yes" to require password encryption,
-"no" to disable it, and "try" to try encrytping password an falling back
-to plain text password. Password encryption works on Sybase ASE 15.0.1
-or higher and uses RSA.
-* packetSize - Network packet size. Must be less than or equal the server's
-max network packet size. The default is the server's default network
-packet size.
-* applicationName - the name of your application.
-It is a best practice to set it.
+
+	* ssl - Whether or not to use SSL. The default is not to use ssl.
+	  Set to "on" if the server is setup to use ssl.
+	* encryptPassword - Can be "yes" to require password encryption,
+	  "no" to disable it, and "try" to try encrytping password an falling back
+	  to plain text password. Password encryption works on Sybase ASE 15.5
+	  or higher and uses RSA.
+	* packetSize - Network packet size. Must be less than or equal the server's
+	  max network packet size. The default is the server's default network
+	  packet size.
+	* applicationName - the name of your application.
+	  It is a best practice to set it.
 
 ### Query parameters
 Most of the database/sql APIs are implemented, with a major one missing:
@@ -93,14 +104,20 @@ Almost all of the sybase ASE datatypes are supported,
 with the exception of lob locators.
 The type mapping between the server and the go data types is as follows:
 
-* varchar/text/char/unichar/univarchar/xml => string
-* int/smalling/bigint => int64
-Unsigned bigints with a value > Math.MaxInt64 will be returned as uint64
-* date/datetime/bigdate/bigdatetime => time.Time
-* image/binary/varbinary/image => []byte
-* real/float => float64
-* decimal/numeric/money/smallmoney => tds.Num.
-Please see the  "precise numerical types" section.
+
+		* varchar/text/char/unichar/univarchar/xml => string
+	
+		* int/smalling/bigint => int64.
+			Unsigned bigints with a value > Math.MaxInt64 will be returned as uint64
+	
+		* date/datetime/bigdate/bigdatetime => time.Time
+	
+		* image/binary/varbinary/image => []byte
+	
+		* real/float => float64
+	
+		* decimal/numeric/money/smallmoney => tds.Num.
+	    Please see the  "precise numerical types" section.
 
 ### Precise numerical types
 decimal/numeric/money/smallmoney data can be given as parameters using any
@@ -137,15 +154,14 @@ You will have to handle it yourself and use a charset supported by the server.
 One can set a custom error callback to process server errors before
 the regular error processing routing.
 This allows handling showplan messages and print statement.
-You must cast your database/sql connection as sql.Conn to use this extension.
 
 The following demonstrates how to handle showplan and print messages:
 
 
-	conn := goConn.(*tds.Conn)
+	conn := sql.Open("tds", url)
 	
 	// print showplan messages and all
-	conn.SetErrorhandler(func(m tds.SybError) bool {
+	conn.Driver().(tds.ErrorHandler).SetErrorhandler(func(m tds.SybError) bool {
 		if m.Severity == 10 {
 			if (m.MsgNumber >= 3612 && m.MsgNumber <= 3615) ||
 				(m.MsgNumber >= 6201 && m.MsgNumber <= 6299) ||
@@ -178,10 +194,12 @@ You can use stmt_test.go and session_test.go for sample usage, as follows:
 ### License
 This driver is release under the go license
 
-### Credits
-* the freetds and jtds protocol documentation.
-* Microsoft for releasing the full tds specification.
-There are differences, however a lot of it is relevant.
-* github.com/denisenkom/go-mssqldb for most of the tests.
-* The Sybase::TdsServer perl module for capabilities handling.
+Credits
+
+
+	* the freetds and jtds protocol documentation.
+	* Microsoft for releasing the full tds specification.
+	  There are differences, however a lot of it is relevant.
+	* github.com/denisenkom/go-mssqldb for most of the tests.
+	* The Sybase::TdsServer perl module for capabilities handling.
 
