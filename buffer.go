@@ -1,4 +1,4 @@
-package netlib
+package tds
 
 // All packet and messages encapsulation goes here.
 // No protocol logic except bytes shuffling.
@@ -29,7 +29,7 @@ const (
 
 // header is the header for netlib packets which enclose all messages
 type header struct {
-	token      PacketType
+	token      packetType
 	status     uint8
 	packetSize uint16
 	spid       uint16
@@ -39,7 +39,7 @@ type header struct {
 
 // Read deserializes a PacketHeader struct
 func (h *header) read(e *bin.Encoder) error {
-	h.token = PacketType(e.ReadByte())
+	h.token = packetType(e.ReadByte())
 	h.status = e.Uint8()
 	h.packetSize = e.Uint16()
 	h.spid = e.Uint16()
@@ -61,27 +61,13 @@ func (h header) write(e *bin.Encoder) error {
 	return err
 }
 
-// Messager is the interface which describes
-// the messages sent by the netlib buffer.
-//
-// A message should provide serialization functions
-// as well as a token and clues on its size.
-type Messager interface {
-	Token() byte
-	Size() uint8
-	SizeLen() uint8
-	LimitRead() bool
-	Write(*bin.Encoder) error
-	Read(*bin.Encoder) error
-}
-
 const maxMsgBufSize = 25000
 
-// DefaultCancelTimeout is the number of seconds to wait for the cancel to be sent
-const DefaultCancelTimeout = 10
+// defaultCancelTimeout is the number of seconds to wait for the cancel to be sent
+const defaultCancelTimeout = 10
 
-// Buffer reads and writes netlib packets with proper header and size
-type Buffer struct {
+// buf reads and writes netlib packets with proper header and size
+type buf struct {
 	rw io.ReadWriter
 	h  header       // packet header
 	pb bytes.Buffer // packet buffer
@@ -101,12 +87,12 @@ type Buffer struct {
 	ReadTimeout   int
 	CancelTimeout int // number of seconds before cancel is timed out and connection is marked dead
 
-	DefaultMessageMap map[byte]Messager
+	defaultMessageMap map[token]messageReader
 }
 
-// NewBuffer inits a buffer struct with the different buffers for packet, message and header
-func NewBuffer(packetSize int, rw io.ReadWriter) *Buffer {
-	b := new(Buffer)
+// newBuf inits a buffer struct with the different buffers for packet, message and header
+func newBuf(packetSize int, rw io.ReadWriter) *buf {
+	b := new(buf)
 	b.PacketSize = packetSize
 	b.rw = rw
 	b.me = bin.NewEncoder(&b.mb, binary.LittleEndian)
@@ -116,18 +102,18 @@ func NewBuffer(packetSize int, rw io.ReadWriter) *Buffer {
 		io.Writer
 	}{b.rw, &b.pb}, binary.BigEndian)
 	b.cancelCh = make(chan error, 1)
-	b.CancelTimeout = DefaultCancelTimeout
+	b.CancelTimeout = defaultCancelTimeout
 	return b
 }
 
 // SetEndianness changes the endianness for the packet encoder and the packet buffer
-func (b *Buffer) SetEndianness(endianness binary.ByteOrder) {
+func (b *buf) SetEndianness(endianness binary.ByteOrder) {
 	b.pe.SetEndianness(endianness)
 	b.me.SetEndianness(endianness)
 }
 
 // SetCharset changes the charset for the packet encoder and the packet buffer
-func (b *Buffer) SetCharset(c string) error {
+func (b *buf) SetCharset(c string) error {
 	e, err := getEncoding(c)
 	if err != nil {
 		return fmt.Errorf("netlib: could not find encoder for %s", c)
@@ -140,14 +126,14 @@ func (b *Buffer) SetCharset(c string) error {
 // initPkt sets the packet type and send the header.
 // Usually called whenever the packet type changes and after a message send,
 // when other messages are expected
-func (b *Buffer) initPkt(t PacketType) {
+func (b *buf) initPkt(t packetType) {
 	b.pb.Reset()
 	b.h.token, b.h.status = t, 0
 	b.h.write(&b.he)
 }
 
 // readPkt reads a tds packet and fills the header information
-func (b *Buffer) readPkt(ignoreCan bool) (err error) {
+func (b *buf) readPkt(ignoreCan bool) (err error) {
 	b.pb.Reset()
 
 	// Actually read packet
@@ -168,7 +154,7 @@ func (b *Buffer) readPkt(ignoreCan bool) (err error) {
 
 // sendPkt sends a packet to the underlying writer
 // It writes the header, the payload and flushes if needed
-func (b *Buffer) sendPkt(status uint8) (err error) {
+func (b *buf) sendPkt(status uint8) (err error) {
 	b.pb.Bytes()[1] = status
 
 	// discard packets until the last one when cancelling.
@@ -208,7 +194,7 @@ func (b *Buffer) sendPkt(status uint8) (err error) {
 // Will also return the number of bytes read.
 // Eventually reads the next packet if needed.
 // Implements the io.Reader interface
-func (b *Buffer) Read(buf []byte) (n int, err error) {
+func (b *buf) Read(buf []byte) (n int, err error) {
 	n, err = io.ReadFull(&b.pb, buf)
 
 	// could not read all now, proceed next packet
@@ -227,7 +213,7 @@ func (b *Buffer) Read(buf []byte) (n int, err error) {
 // Write writes the buffer's data to the underlying writer.
 // We flush whenever we fill the write buffer using sendPacket.
 // Implements the io.Writer interface
-func (b *Buffer) Write(p []byte) (n int, err error) {
+func (b *buf) Write(p []byte) (n int, err error) {
 	var copied, remaining int
 	for {
 		remaining = int(b.PacketSize) - b.pb.Len()
@@ -257,7 +243,7 @@ func (b *Buffer) Write(p []byte) (n int, err error) {
 }
 
 // Skip skips a given amount of bytes
-func (b *Buffer) skip(cnt int) (err error) {
+func (b *buf) skip(cnt int) (err error) {
 	if cnt == 0 {
 		return nil
 	}
@@ -280,8 +266,8 @@ func (b *Buffer) skip(cnt int) (err error) {
 	return nil
 }
 
-// Peek will read one byte without affecting the offset
-func (b *Buffer) Peek() (out byte, err error) {
+// peek will read one byte without affecting the offset
+func (b *buf) peek() (out byte, err error) {
 	out = b.pe.ReadByte()
 	err = b.pe.Err()
 	b.pb.UnreadByte()
@@ -292,15 +278,15 @@ func (b *Buffer) Peek() (out byte, err error) {
 // and writes it to the underlying writer.
 // This is used when the tds needs a length right after the token
 // for non-fixed length messages
-func (b *Buffer) writeMsg(msg Messager) (err error) {
+func (b *buf) writeMsg(msg messageReaderWriter) (err error) {
 	b.mb.Reset()
 
 	if err = msg.Write(&b.me); err != nil {
 		return err
 	}
 
-	if msg.Token() != byte(None) {
-		b.pe.WriteByte(msg.Token())
+	if msg.Token() != token(nonePacket) {
+		b.pe.WriteByte(byte(msg.Token()))
 	}
 
 	// if it's a token with a known size, write it
@@ -329,7 +315,7 @@ func (b *Buffer) writeMsg(msg Messager) (err error) {
 }
 
 // readMsg reads a message from the underlying connection.
-func (b *Buffer) readMsg(msg Messager) (err error) {
+func (b *buf) readMsg(msg messageReader) (err error) {
 	var size int
 	switch msg.SizeLen() {
 	case 8:
@@ -359,7 +345,7 @@ func (b *Buffer) readMsg(msg Messager) (err error) {
 }
 
 // skipMsg skips a message according to its length.
-func (b *Buffer) skipMsg(msg Messager) (err error) {
+func (b *buf) skipMsg(msg messageReader) (err error) {
 	var size int
 	// check for existence
 
@@ -382,8 +368,8 @@ func (b *Buffer) skipMsg(msg Messager) (err error) {
 	return err
 }
 
-// Send sends a list of messages given as parameters
-func (b *Buffer) Send(ctx context.Context, pt PacketType, msgs ...Messager) (err error) {
+// send sends a list of messages given as parameters
+func (b *buf) send(ctx context.Context, pt packetType, msgs ...messageReaderWriter) (err error) {
 	// init packet header
 	b.initPkt(pt)
 
@@ -412,79 +398,96 @@ func (b *Buffer) Send(ctx context.Context, pt PacketType, msgs ...Messager) (err
 	return b.sendPkt(1)
 }
 
-// Receive reads messages given in a map, and run a given message handler after each message read.
+// netlib session state
+type state struct {
+	t       token
+	prev    token // previous token
+	handler func(t token) error
+	msg     map[token]messageReader
+	err     error
+	ctx     context.Context
+}
+
+// session state
+type stateFn func(*state) stateFn
+
+// receive reads messages given in a map, and run a given message handler after each message read.
 //
 // When the handler returns true, it will return instantly and quit processing messages.
 // When there is not matching message in the map, the getMsg function will be called
 // to get the message's length and skip it.
 //
 // Returns the token of the last parsed message, and eventually an error
-func (b *Buffer) Receive(ctx context.Context, msgs map[byte]Messager,
-	msgHandler func(byte, bool) (bool, error), doBreak bool,
-	getMsg func(byte) Messager) (byte, error) {
-
+func (b *buf) receive(s *state) stateFn {
+	defer func() {
+		s.prev = s.t
+	}()
 	// create a context with a Timeout of ReadTimeout if no particular context given
-	if ctx == nil && b.ReadTimeout > 0 {
+	if s.ctx == nil && b.ReadTimeout > 0 {
 		var cancelFunc func()
-		ctx, cancelFunc = context.WithTimeout(context.Background(), time.Duration(b.ReadTimeout)*time.Second)
+		s.ctx, cancelFunc = context.WithTimeout(context.Background(), time.Duration(b.ReadTimeout)*time.Second)
 		defer cancelFunc()
 	}
 
 	// start Timeout watcher
-	if ctx != nil {
-		if cancel := b.watchCancel(ctx, true); cancel != nil {
+	if s.ctx != nil {
+		if cancel := b.watchCancel(s.ctx, true); cancel != nil {
 			defer cancel()
 		}
 	}
 
-	var t byte
-	var err error
-	for {
-		t = b.pe.ReadByte()
-		if err = b.pe.Err(); err != nil {
-			// we should not be at EOF here
-			if err == io.EOF {
-				return 0, fmt.Errorf("netlib: unexpected EOF while reading message")
-			}
-			return 0, err
+	s.t = token(b.pe.ReadByte())
+	if s.err = b.pe.Err(); s.err != nil {
+		// we should not be at EOF here
+		if s.err == io.EOF {
+			s.err = fmt.Errorf("netlib: unexpected EOF while reading message")
+		}
+		return nil
+	}
+
+	// expecting reply here
+	if b.h.token != normalPacket && b.h.token != replyPacket {
+		s.err = fmt.Errorf("netlib: expected reply or normal token, got %s", b.h.token)
+		return nil
+	}
+
+	// check if the message is in the ones to return
+	// and attempt to skip if not found
+	msg, ok := b.defaultMessageMap[s.t]
+
+	// look in provided message map
+	if !ok {
+		msg, ok = s.msg[s.t]
+	}
+
+	// message not in message maps, skip
+	if !ok {
+		if s.err = b.skipMsg(emptyMsg{msg: newMsg(s.t)}); s.err != nil {
+			return nil
+		}
+	} else {
+		// read the message
+		s.err = b.readMsg(msg)
+		if s.err != nil {
+			return nil
 		}
 
-		// expecting reply here
-		if b.h.token != Normal && b.h.token != Reply {
-			return t, fmt.Errorf("netlib: expected reply or normal token, got %s", b.h.token)
+		// call message handler
+		if s.err = s.handler(s.t); s.err != nil {
+			return nil
 		}
+	}
 
-		// check if the message is in the ones to return
-		// and attempt to skip if not found
-		msg, ok := b.DefaultMessageMap[t]
-
-		// look in provided message map
-		if !ok {
-			msg, ok = msgs[t]
-		}
-
-		if !ok {
-			if err = b.skipMsg(getMsg(t)); err != nil {
-				return t, err
-			}
-		} else {
-			// read the message and call the callback
-			err = b.readMsg(msg)
-			if err != nil {
-				return t, err
-			}
-			doBreak, err := msgHandler(t, doBreak)
-			if doBreak || err != nil {
-				return t, err
-			}
-		}
+	// return
+	return func(*state) stateFn {
+		return b.receive(s)
 	}
 }
 
 // watchCancel will start a cancelation goroutine
 // if the context can be terminated.
 // Returns a function to end the goroutine
-func (b *Buffer) watchCancel(ctx context.Context, reading bool) func() {
+func (b *buf) watchCancel(ctx context.Context, reading bool) func() {
 	if done := ctx.Done(); done != nil {
 		finished := make(chan struct{})
 		go func() {
@@ -506,7 +509,7 @@ func (b *Buffer) watchCancel(ctx context.Context, reading bool) func() {
 }
 
 // cancel simply sends a cancel message to the cancel channel.
-func (b *Buffer) cancel(cancelErr error, reading bool) (err error) {
+func (b *buf) cancel(cancelErr error, reading bool) (err error) {
 	if swapped := atomic.CompareAndSwapInt32(&b.inCancel, 0, 1); !swapped {
 		// cancel already in progress
 		return nil
@@ -529,20 +532,20 @@ func (b *Buffer) cancel(cancelErr error, reading bool) (err error) {
 	// we are currently reading, so we need to send a cancel packet
 	// to avoid draining cancel channel
 	if reading {
-		canBuf := NewBuffer(int(b.h.packetSize), b.rw)
-		canBuf.initPkt(Cancel)
+		canBuf := newBuf(int(b.h.packetSize), b.rw)
+		canBuf.initPkt(cancelPacket)
 		err = canBuf.sendPkt(1)
 	}
 	return err
 }
 
 // cancelling checks if a cancel was requested.
-func (b *Buffer) cancelling() bool {
+func (b *buf) cancelling() bool {
 	return atomic.LoadInt32(&b.inCancel) == 1
 }
 
 // processCancel reads packets until finding the cancel ack.
-func (b *Buffer) processCancel() (err error) {
+func (b *buf) processCancel() (err error) {
 	var cancelErr error
 	defer atomic.StoreInt32(&b.inCancel, 0)
 
@@ -566,12 +569,12 @@ func (b *Buffer) processCancel() (err error) {
 	switch b.h.token {
 	default:
 		err = fmt.Errorf("netlib: unexpected token type %s while looking for cancel token", b.h.token)
-	case Normal:
+	case normalPacket:
 		err = cancelErr
 		if b.h.status&cancelAck == 0 {
 			err = errors.New("netlib: Timeout reached, yet the cancel was not acknowledged")
 		}
-	case Reply:
+	case replyPacket:
 		if err = b.skip(b.pb.Len() - 9); err == nil {
 			err = cancelErr
 			// find done token with cancel ack bit set

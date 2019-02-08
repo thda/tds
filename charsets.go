@@ -1,4 +1,4 @@
-package netlib
+package tds
 
 import (
 	"fmt"

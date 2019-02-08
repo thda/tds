@@ -11,51 +11,71 @@ import (
 	"errors"
 )
 
+// messagerReader is the interface which describes
+// the messages sent by the netlib buffer.
+//
+// A message should provide serialization functions
+// as well as a token and clues on its size.
+type messageReader interface {
+	Token() token
+	Size() uint8
+	SizeLen() uint8
+	LimitRead() bool
+	Read(*bin.Encoder) error
+}
+
+// messageReaderWriter is implemented by messages
+// which can be read an written
+type messageReaderWriter interface {
+	messageReader
+	Write(*bin.Encoder) error
+}
+
 //go:generate stringer -type=token
 type token byte
 
 // message Tokens
 const (
-	None          token = 0x00
-	CapabilityReq token = 0x01
-	CapabilityRes token = 0x02
-	ParamFmt2     token = 0x20 // 32
-	Language      token = 0x21 // 33
-	OrderBy2      token = 0x22 // 34
-	WideColumnFmt token = 0x61 // 97
-	Dynamic2      token = 0x62 // 98
-	Msg           token = 0x65 // 101
-	ReturnStatus  token = 0x79 // 121
-	CurClose      token = 0x80 // 128
-	CurDelete     token = 0x81 // 129
-	CurFetch      token = 0x82 // 130
-	CurFmt        token = 0x83 // 131
-	CurOpen       token = 0x84 // 132
-	CurDeclare    token = 0x86 // 134
-	Logout        token = 0x71 // 113
-	TableName     token = 0xa4 // 164
-	ColumnInfo    token = 0xa5 // 165
-	OptionCmd     token = 0xa6 // 166
-	CmpRowName    token = 0xa7 // 167
-	CmpRowFmt     token = 0xa8 // 168
-	OrderBy       token = 0xa9 // 169
-	Info          token = 0xab // 171
-	LoginAck      token = 0xad // 173
-	Control       token = 0xae // 174
-	Row           token = 0xd1 // 209
-	CmpRow        token = 0xd3 // 211
-	Param         token = 0xd7 // 215
-	Capabilities  token = 0xe2 // 226
-	EnvChange     token = 0xe3 // 227
-	SQLMessage    token = 0xe5 // 229
-	DbRPC         token = 0xe6 // 230
-	Dynamic       token = 0xe7 // 231
-	ParamFmt      token = 0xec // 236
-	Auth          token = 0xed // 237
-	ColumnFmt     token = 0xee // 238
-	Done          token = 0xfd // 253
-	DoneProc      token = 0xfe // 254
-	DoneInProc    token = 0xff // 255
+	noneToken          token = 0x00
+	capabilityReqToken token = 0x01
+	capabilityResToken token = 0x02
+	paramFmt2Toekn     token = 0x20 // 32
+	languageToken      token = 0x21 // 33
+	orderBy2Token      token = 0x22 // 34
+	wideColumnFmtToken token = 0x61 // 97
+	dynamic2Token      token = 0x62 // 98
+	msgToken           token = 0x65 // 101
+	returnStatusToken  token = 0x79 // 121
+	curCloseToken      token = 0x80 // 128
+	curDeleteToken     token = 0x81 // 129
+	curFetchToken      token = 0x82 // 130
+	curFmtToken        token = 0x83 // 131
+	curOpenToken       token = 0x84 // 132
+	curDeclareToken    token = 0x86 // 134
+	logoutToken        token = 0x71 // 113
+	tableNameToken     token = 0xa4 // 164
+	columnInfoToken    token = 0xa5 // 165
+	optionCmdToken     token = 0xa6 // 166
+	cmpRowNameToken    token = 0xa7 // 167
+	cmpRowFmtToken     token = 0xa8 // 168
+	orderByToken       token = 0xa9 // 169
+	infoToken          token = 0xab // 171
+	loginAckToken      token = 0xad // 173
+	controlToken       token = 0xae // 174
+	rowToken           token = 0xd1 // 209
+	cmpRowToken        token = 0xd3 // 211
+	paramToken         token = 0xd7 // 215
+	capabilitiesToken  token = 0xe2 // 226
+	envChangeToken     token = 0xe3 // 227
+	sqlMessageToken    token = 0xe5 // 229
+	dbRPCToken         token = 0xe6 // 230
+	dynamicToken       token = 0xe7 // 231
+	paramFmtToken      token = 0xec // 236
+	authToken          token = 0xed // 237
+	columnFmtToken     token = 0xee // 238
+	doneToken          token = 0xfd // 253
+	doneProcToken      token = 0xfe // 254
+	doneInProcToken    token = 0xff // 255
 )
 
 // Message attribute options
@@ -73,16 +93,73 @@ const (
 	ignoreSize
 )
 
+// msgs is a table which contains the attributes for each message type
+var msgs = map[token]msg{
+	noneToken:          {noneToken, noFlag, 0},
+	capabilityReqToken: {capabilityReqToken, noFlag, 0},
+	capabilityResToken: {capabilityResToken, noFlag, 0},
+	paramFmt2Toekn:     {paramFmt2Toekn, long, 0},
+	languageToken:      {languageToken, ignoreSize, 0},
+	orderBy2Token:      {orderBy2Token, long, 0},
+	cmpRowFmtToken:     {cmpRowFmtToken, noFlag, 0},
+	cmpRowNameToken:    {cmpRowNameToken, noFlag, 0},
+	wideColumnFmtToken: {wideColumnFmtToken, long, 0},
+	dynamic2Token:      {dynamic2Token, long, 0},
+	returnStatusToken:  {returnStatusToken, fixedSize, 4},
+	curCloseToken:      {curCloseToken, noFlag, 0},
+	curDeleteToken:     {curDeleteToken, noFlag, 0},
+	curFetchToken:      {curFetchToken, noFlag, 0},
+	curFmtToken:        {curFmtToken, noFlag, 0},
+	curOpenToken:       {curOpenToken, noFlag, 0},
+	curDeclareToken:    {curDeclareToken, noFlag, 0},
+	logoutToken:        {logoutToken, fixedSize, 1},
+	tableNameToken:     {tableNameToken, limitRead, 0},
+	columnInfoToken:    {columnInfoToken, limitRead, 0},
+	optionCmdToken:     {optionCmdToken, noFlag, 0},
+	controlToken:       {controlToken, noFlag, 0},
+	orderByToken:       {orderByToken, noFlag, 0},
+	loginAckToken:      {loginAckToken, noFlag, 0},
+	rowToken:           {rowToken, ignoreSize, 0},
+	paramToken:         {paramToken, ignoreSize, 0},
+	cmpRowToken:        {cmpRowToken, ignoreSize, 0},
+	capabilitiesToken:  {capabilitiesToken, noFlag, 0},
+	envChangeToken:     {envChangeToken, noFlag, 0},
+	sqlMessageToken:    {sqlMessageToken, noFlag, 0},
+	infoToken:          {infoToken, noFlag, 0},
+	dbRPCToken:         {dbRPCToken, noFlag, 0},
+	dynamicToken:       {dynamicToken, noFlag, 0},
+	paramFmtToken:      {paramFmtToken, noFlag, 0},
+	columnFmtToken:     {columnFmtToken, noFlag, 0},
+	doneToken:          {doneToken, fixedSize, 8},
+	msgToken:           {msgToken, short, 0},
+	doneProcToken:      {doneProcToken, fixedSize, 8},
+	doneInProcToken:    {doneInProcToken, fixedSize, 8}}
+
 // msg is the struct containing all the attributes of a TDS message.
-// It is embeded in all message structs and implements the netlib.Message interface.
+// It is embeded in all message structs and implements the Message interface.
 type msg struct {
 	token token
 	flags uint8
 	size  uint8 // Size for fixed length messages
 }
 
-func (attr msg) Token() byte {
-	return byte(attr.token)
+func newMsg(t token) msg {
+	// check for existence
+	attr, _ := safeGetMsg(t)
+	return attr
+}
+
+func safeGetMsg(t token) (msg, error) {
+	// check for existence
+	attr, ok := msgs[t]
+	if !ok {
+		return msg{}, fmt.Errorf("tds: unknown token %s", t)
+	}
+	return attr, nil
+}
+
+func (attr msg) Token() token {
+	return attr.token
 }
 
 func (attr msg) Size() uint8 {
@@ -109,69 +186,16 @@ func (attr msg) LimitRead() bool {
 	return attr.flags&limitRead != 0
 }
 
-func (attr msg) Write(*bin.Encoder) error {
+type emptyMsg struct {
+	msg
+}
+
+func (e emptyMsg) Write(*bin.Encoder) error {
 	return nil
 }
 
-func (attr msg) Read(*bin.Encoder) error {
+func (e emptyMsg) Read(*bin.Encoder) error {
 	return nil
-}
-
-// msgs is a table which contains the attributes for each message type
-var msgs = map[token]msg{
-	None:          {None, noFlag, 0},
-	CapabilityReq: {CapabilityReq, noFlag, 0},
-	CapabilityRes: {CapabilityRes, noFlag, 0},
-	ParamFmt2:     {ParamFmt2, long, 0},
-	Language:      {Language, ignoreSize, 0},
-	OrderBy2:      {OrderBy2, long, 0},
-	CmpRowFmt:     {CmpRowFmt, noFlag, 0},
-	CmpRowName:    {CmpRowName, noFlag, 0},
-	WideColumnFmt: {WideColumnFmt, long, 0},
-	Dynamic2:      {Dynamic2, long, 0},
-	ReturnStatus:  {ReturnStatus, fixedSize, 4},
-	CurClose:      {CurClose, noFlag, 0},
-	CurDelete:     {CurDelete, noFlag, 0},
-	CurFetch:      {CurFetch, noFlag, 0},
-	CurFmt:        {CurFmt, noFlag, 0},
-	CurOpen:       {CurOpen, noFlag, 0},
-	CurDeclare:    {CurDeclare, noFlag, 0},
-	Logout:        {Logout, fixedSize, 1},
-	TableName:     {TableName, limitRead, 0},
-	ColumnInfo:    {ColumnInfo, limitRead, 0},
-	OptionCmd:     {OptionCmd, noFlag, 0},
-	Control:       {Control, noFlag, 0},
-	OrderBy:       {OrderBy, noFlag, 0},
-	LoginAck:      {LoginAck, noFlag, 0},
-	Row:           {Row, ignoreSize, 0},
-	Param:         {Param, ignoreSize, 0},
-	CmpRow:        {CmpRow, ignoreSize, 0},
-	Capabilities:  {Capabilities, noFlag, 0},
-	EnvChange:     {EnvChange, noFlag, 0},
-	SQLMessage:    {SQLMessage, noFlag, 0},
-	Info:          {Info, noFlag, 0},
-	DbRPC:         {DbRPC, noFlag, 0},
-	Dynamic:       {Dynamic, noFlag, 0},
-	ParamFmt:      {ParamFmt, noFlag, 0},
-	ColumnFmt:     {ColumnFmt, noFlag, 0},
-	Done:          {Done, fixedSize, 8},
-	Msg:           {Msg, short, 0},
-	DoneProc:      {DoneProc, fixedSize, 8},
-	DoneInProc:    {DoneInProc, fixedSize, 8}}
-
-func newMsg(t token) msg {
-	// check for existence
-	attr, _ := safeGetMsg(t)
-	return attr
-}
-
-func safeGetMsg(t token) (msg, error) {
-	// check for existence
-	attr, ok := msgs[t]
-	if !ok {
-		return msg{}, fmt.Errorf("tds: unknown token %s", t)
-	}
-	return attr, nil
 }
 
 //
@@ -394,16 +418,16 @@ type capabilities struct {
 }
 
 func newCapabilities() *capabilities {
-	c := &capabilities{reqToken: byte(CapabilityReq), resToken: byte(CapabilityRes)}
+	c := &capabilities{reqToken: byte(capabilityReqToken), resToken: byte(capabilityResToken)}
 	c.req = make([]byte, defaultcapabilitiesLength)
 	c.res = make([]byte, defaultcapabilitiesLength)
 
 	// set capabilities from default
 	for _, capability := range &defaultReqcapabilities {
-		c.setcapabilities(CapabilityReq, capability)
+		c.setcapabilities(capabilityReqToken, capability)
 	}
 	for _, capability := range &defaultRescapabilities {
-		c.setcapabilities(CapabilityRes, capability)
+		c.setcapabilities(capabilityResToken, capability)
 	}
 	return c
 }
@@ -415,9 +439,9 @@ func (c *capabilities) setcapabilities(capabilityType token, capabilities ...int
 
 	// determine the target array
 	switch capabilityType {
-	case CapabilityReq:
+	case capabilityReqToken:
 		target = c.req[:]
-	case CapabilityRes:
+	case capabilityResToken:
 		target = c.res[:]
 	default:
 		return errors.New("tds: invalid capability type. Should be capabilityReqToken or capabilityResToken")
@@ -446,9 +470,9 @@ func (c *capabilities) isSet(capabilityType token, capability int) bool {
 	var length int
 
 	switch capabilityType {
-	case CapabilityReq:
+	case capabilityReqToken:
 		target = c.req[:]
-	case CapabilityRes:
+	case capabilityResToken:
 		target = c.res[:]
 	default:
 		return false
@@ -788,7 +812,7 @@ func (l login) Write(e *bin.Encoder) error {
 	writeFixedSizeString(e, fmt.Sprintf("%d", l.packetSize), 6, true)
 	// if no packet size was given, ask the server
 	if l.packetSize == 0 {
-		l.capabilities.setcapabilities(CapabilityReq, reqSrvpktsize)
+		l.capabilities.setcapabilities(capabilityReqToken, reqSrvpktsize)
 	}
 	e.Pad(0x00, 4) // magic
 	err := e.Err()
@@ -872,6 +896,12 @@ type logout struct {
 
 func (l logout) Write(e *bin.Encoder) error {
 	e.WriteByte(l.option)
+	err := e.Err()
+	return err
+}
+
+func (l logout) Read(e *bin.Encoder) error {
+	l.option = e.ReadByte()
 	err := e.Err()
 	return err
 }
@@ -1199,6 +1229,14 @@ type sybMsg struct {
 func (m sybMsg) Write(e *bin.Encoder) error {
 	e.WriteInt8(m.field1)
 	e.WriteInt16(m.field2)
+	err := e.Err()
+	return err
+}
+
+// Read reads a sybMsg struct
+func (m sybMsg) Read(e *bin.Encoder) error {
+	m.field1 = e.Int8()
+	m.field2 = e.Int16()
 	err := e.Err()
 	return err
 }

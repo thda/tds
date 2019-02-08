@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
-
-	"github.com/thda/tds/netlib"
 )
 
 // TODO: batch inserts via Batch/Submit methods.
@@ -20,7 +18,7 @@ type Stmt struct {
 	row        *row // parameter values
 	paramFmts  *columns
 	paramToken token
-	msgs       []netlib.Messager
+	msgs       []messageReaderWriter
 	converters []driver.ValueConverter
 	ctx        context.Context
 	values     []driver.Value
@@ -43,19 +41,19 @@ func newStmt(ctx context.Context, s *session, query string) (*Stmt, error) {
 		return st, driver.ErrBadConn
 	}
 
-	params := &columns{msg: newMsg(ParamFmt), flags: param}
-	wideParams := &columns{msg: newMsg(ParamFmt2), flags: wide | param}
-	st.row = &row{msg: newMsg(Param)}
+	params := &columns{msg: newMsg(paramFmtToken), flags: param}
+	wideParams := &columns{msg: newMsg(paramFmt2Toekn), flags: wide | param}
+	st.row = &row{msg: newMsg(paramToken)}
 
 	// get a statement number
 	st.ID = *idPool.Get().(*int64)
 
-	st.d = &dynamic{msg: newMsg(Dynamic2), operation: dynamicPrepare,
+	st.d = &dynamic{msg: newMsg(dynamic2Token), operation: dynamicPrepare,
 		name:      "gtds" + fmt.Sprintf("%d", st.ID),
 		statement: "create proc gtds" + fmt.Sprintf("%d", st.ID) + " as " + query}
 
 	// send query
-	err := s.b.Send(ctx, netlib.Normal, st.d)
+	err := s.b.send(ctx, normalPacket, st.d)
 	if err = s.checkErr(err, "tds: Prepare failed", false); err != nil {
 		return st, err
 	}
@@ -65,11 +63,12 @@ func newStmt(ctx context.Context, s *session, query string) (*Stmt, error) {
 
 	// parse parameters info and return status
 	// the server will spew out a rowfmt, but it's safe to ignore it, it will be resent
-	_, err = s.processResponse(ctx,
-		map[byte]netlib.Messager{byte(Dynamic2): st.d,
-			byte(ParamFmt): params, byte(ParamFmt2): wideParams}, false)
-	if err = s.checkErr(err, "tds: Prepare failed", true); err != nil {
-		return st, err
+	for f := s.initState(ctx,
+		map[token]messageReader{dynamic2Token: st.d,
+			paramFmtToken: params, paramFmt2Toekn: wideParams}); f != nil; f = f(s.state) {
+		if s.state.err = s.checkErr(err, "tds: Prepare failed", true); err != nil {
+			return st, s.state.err
+		}
 	}
 
 	// assign the expected parameters' values
@@ -99,10 +98,10 @@ func newStmt(ctx context.Context, s *session, query string) (*Stmt, error) {
 		}
 
 		// cache the messages to send for each exec
-		st.msgs = []netlib.Messager{st.d, st.paramFmts, st.row}
+		st.msgs = []messageReaderWriter{st.d, st.paramFmts, st.row}
 	} else {
 		st.d.status &^= dynamicHasArgs
-		st.msgs = []netlib.Messager{st.d}
+		st.msgs = []messageReaderWriter{st.d}
 	}
 
 	return st, nil
@@ -120,7 +119,7 @@ func (st *Stmt) send(ctx context.Context, args []driver.Value) (err error) {
 	}
 
 	st.row.data = args
-	err = st.s.b.Send(ctx, netlib.Normal, st.msgs[:]...)
+	err = st.s.b.send(ctx, normalPacket, st.msgs[:]...)
 	st.s.clearResult()
 
 	return err
@@ -210,15 +209,19 @@ func (st *Stmt) Close() error {
 	st.d.status = 0
 
 	// send message
-	err := st.s.b.Send(st.ctx, netlib.Normal, st.d)
+	err := st.s.b.send(st.ctx, normalPacket, st.d)
 	if err = st.s.checkErr(err, "tds: Close failed", false); err != nil {
 		return err
 	}
 
 	// get response
 	// TODO: parse dynamic token to get status
-	_, err = st.s.processResponse(st.ctx, nil, false)
-	return st.s.checkErr(err, "tds: Prepare failed", true)
+	for f := st.s.initState(nil, nil); f != nil; f = f(st.s.state) {
+		if err := st.s.checkErr(st.s.state.err, "tds: close failed", true); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // ColumnConverter returns converters which check min, max, nullability,
