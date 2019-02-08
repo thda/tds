@@ -170,7 +170,7 @@ type ErrorHandler interface {
 
 // register the driver
 type sybDriver struct {
-	*sync.Mutex
+	sync.Mutex
 	IsError func(s SybError) bool
 }
 

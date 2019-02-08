@@ -17,8 +17,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/thda/tds/netlib"
-
 	"errors"
 )
 
@@ -45,7 +43,7 @@ type session struct {
 	res         *Result // response info
 
 	// tds buffer to split into TDS PDUs, send and read packets
-	b            *netlib.Buffer
+	b            *buf
 	c            io.ReadWriteCloser // net connection
 	capabilities capabilities       // tds capabilities
 
@@ -68,10 +66,10 @@ type session struct {
 	returnStatus returnStatus
 	sqlMessage   sqlMessage
 
-	// previous token
-	prev token
+	// netlib sesion state
+	state *state
 
-	messageMap map[byte]netlib.Messager
+	messageMap map[token]messageReader
 
 	// error handling routine
 	IsError func(SybError) bool
@@ -94,10 +92,10 @@ func newLogin(prm connParams) *login {
 
 // dial the connection, init the TDS buffer, attempt login
 func newSession(prm connParams) (s *session, err error) {
-	s = &session{envChange: envChange{msg: newMsg(EnvChange)},
-		done:         done{msg: newMsg(Done)},
-		sqlMessage:   sqlMessage{msg: newMsg(SQLMessage)},
-		returnStatus: returnStatus{msg: newMsg(ReturnStatus)},
+	s = &session{envChange: envChange{msg: newMsg(envChangeToken)},
+		done:         done{msg: newMsg(doneToken)},
+		sqlMessage:   sqlMessage{msg: newMsg(sqlMessageToken)},
+		returnStatus: returnStatus{msg: newMsg(returnStatusToken)},
 		IsError:      isError, packetSize: prm.packetSize,
 		readTimeout: prm.readTimeout, writeTimeout: prm.writeTimeout,
 		loginTimeout: prm.loginTimeout, res: &Result{lastError: nil}}
@@ -105,10 +103,10 @@ func newSession(prm connParams) (s *session, err error) {
 	// init resultset, buffer, parameters, message cache...
 	s.res.s = s
 	s.server = prm.host
-	s.messageMap = map[byte]netlib.Messager{byte(EnvChange): &s.envChange,
-		byte(DoneProc): &s.done, byte(DoneInProc): &s.done,
-		byte(Done): &s.done, byte(ReturnStatus): &s.returnStatus,
-		byte(SQLMessage): &s.sqlMessage}
+	s.messageMap = map[token]messageReader{envChangeToken: &s.envChange,
+		doneProcToken: &s.done, doneInProcToken: &s.done,
+		doneToken: &s.done, returnStatusToken: &s.returnStatus,
+		sqlMessageToken: &s.sqlMessage}
 
 	// connect
 	if s.c, err = dial(prm); err != nil {
@@ -116,9 +114,34 @@ func newSession(prm connParams) (s *session, err error) {
 	}
 
 	// init netlib buffer
-	s.b = netlib.NewBuffer(s.packetSize, s.c)
+	s.b = newBuf(s.packetSize, s.c)
 	s.b.ReadTimeout, s.b.WriteTimeout = s.readTimeout, s.writeTimeout
-	s.b.DefaultMessageMap = s.messageMap
+	s.b.defaultMessageMap = s.messageMap
+
+	// init state
+	s.state = &state{}
+	s.state.handler = func(t token) error {
+		var err error
+		// process all common tokens (doneToken, doneInProc, envChange, info, etc)
+		// this will fill the result structure, the sqlMessages array, etc
+		switch t {
+		case sqlMessageToken:
+			err = s.processsqlMessage()
+		case envChangeToken:
+			err = s.processEnvChange()
+		case returnStatusToken:
+			err = s.processReturnStatus()
+		case doneProcToken, doneInProcToken, doneToken:
+			// last message for this stream
+			err = s.processDone(token(t))
+		}
+
+		// error was found, return now to caller.
+		// Typically processDone returns an error
+		// when a critical sybase error was faced during processing of the rows.
+		// We need to make this error bubbles up.
+		return err
+	}
 
 	// now log in
 	if err = s.login(prm); err != nil {
@@ -151,7 +174,7 @@ func (s *session) login(prm connParams) (err error) {
 	login := newLogin(prm)
 	login.msg = msg{flags: fixedSize}
 	s.capabilities = *newCapabilities()
-	s.capabilities.msg = newMsg(Capabilities)
+	s.capabilities.msg = newMsg(capabilitiesToken)
 	login.setCapabilities(s.capabilities)
 
 	ctx, cancel := context.WithTimeout(context.Background(),
@@ -159,41 +182,33 @@ func (s *session) login(prm connParams) (err error) {
 	defer cancel()
 
 	// send the login
-	if err = s.b.Send(ctx, netlib.Login, login, &login.capabilities); err != nil {
+	if err = s.b.send(ctx, loginPacket, login, &login.capabilities); err != nil {
 		return fmt.Errorf("tds: login send failed: %s", err)
 	}
 	s.clearResult()
 
-	loginAck := &loginAck{msg: newMsg(LoginAck)}
-	pf := &columns{msg: newMsg(ParamFmt)}
-	p := &row{msg: newMsg(Param)}
+	loginAck := &loginAck{msg: newMsg(loginAckToken)}
+	pf := &columns{msg: newMsg(paramFmtToken)}
+	p := &row{msg: newMsg(paramToken)}
 
 	// only retry once
 	try := 0
-	var t byte
+
 	// get login ack/auth challenge message
 loginResponse:
-	for {
-		t, err = s.processResponse(ctx,
-			map[byte]netlib.Messager{byte(LoginAck): loginAck,
-				byte(Capabilities): &s.capabilities,
-				byte(ParamFmt):     pf,
-				byte(Param):        p}, true)
-
-		switch token(t) {
-		case Done:
-			break loginResponse
-		case ParamFmt:
+	for f := s.processResponse(ctx,
+		map[token]messageReader{loginAckToken: loginAck,
+			capabilitiesToken: &s.capabilities,
+			paramFmtToken:     pf,
+			paramToken:        p}); f != nil; f = f(s.state) {
+		switch s.state.t {
+		case paramFmtToken:
 			// bind the param descriptor and the param
 			p.columns = pf.fmts
 		}
-
-		if err != nil {
-			break
-		}
 	}
 
-	if err != nil && err != io.EOF {
+	if s.state.err != nil && s.state.err != io.EOF {
 		return err
 	}
 
@@ -239,23 +254,23 @@ loginResponse:
 		// send the encrypted password
 
 		// unknown sybMsg for now, help welcome
-		msg1 := &sybMsg{msg: newMsg(Msg), field1: 0x01, field2: 0x0001F}
-		msg2 := &sybMsg{msg: newMsg(Msg), field1: 0x01, field2: 0x0020}
+		msg1 := &sybMsg{msg: newMsg(msgToken), field1: 0x01, field2: 0x0001F}
+		msg2 := &sybMsg{msg: newMsg(msgToken), field1: 0x01, field2: 0x0020}
 
-		cols1 := &columns{msg: newMsg(ParamFmt), fmts: []colFmt{
+		cols1 := &columns{msg: newMsg(paramFmtToken), fmts: []colFmt{
 			colFmt{colType: getType(LongBinary, 2147483647)},
 		}}
-		row1 := &row{msg: newMsg(Param), data: []driver.Value{ciphertext},
+		row1 := &row{msg: newMsg(paramToken), data: []driver.Value{ciphertext},
 			columns: cols1.fmts[:]}
 
-		cols2 := &columns{msg: newMsg(ParamFmt), fmts: []colFmt{
+		cols2 := &columns{msg: newMsg(paramFmtToken), fmts: []colFmt{
 			colFmt{colType: getType(Varchar, 255)},
 			colFmt{colType: getType(LongBinary, 2147483647)},
 		}}
-		row2 := &row{msg: newMsg(Param), data: []driver.Value{"", ciphertext},
+		row2 := &row{msg: newMsg(paramToken), data: []driver.Value{"", ciphertext},
 			columns: cols2.fmts[:]}
 
-		if err = s.b.Send(ctx, netlib.Normal, msg1, cols1, row1, msg2, cols2, row2); err != nil {
+		if err = s.b.send(ctx, normalPacket, msg1, cols1, row1, msg2, cols2, row2); err != nil {
 			return fmt.Errorf("tds: login send failed: %s", err)
 		}
 
@@ -326,8 +341,8 @@ func (s *session) Close() error {
 		time.Duration(logoutTimeout)*time.Second)
 	defer cancel()
 
-	if err := s.b.Send(ctx, netlib.Normal,
-		logout{msg: newMsg(Logout)}); err != nil {
+	if err := s.b.send(ctx, normalPacket,
+		logout{msg: newMsg(logoutToken)}); err != nil {
 		return fmt.Errorf("tds: close failed: %s", err)
 	}
 	return nil
@@ -372,18 +387,19 @@ func (s *session) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx
 		}
 
 		// send the option change command to set isolation level
-		optCmd := optionCmd{msg: newMsg(OptionCmd), command: optionSet,
+		optCmd := optionCmd{msg: newMsg(optionCmdToken), command: optionSet,
 			option: optionIsolationLevel, value: level}
 
-		if err := s.b.Send(ctx, netlib.Normal, &optCmd); err != nil {
+		if err := s.b.send(ctx, normalPacket, &optCmd); err != nil {
 			s.valid = false
 			return s, s.checkErr(err, "tds: isolation level set failed", false)
 		}
 
-		_, err := s.processResponse(ctx, map[byte]netlib.Messager{}, false)
-		if err = s.checkErr(err, "tds: isolation level set failed", true); err != nil {
-			s.valid = false
-			return s, err
+		for f := s.processResponse(ctx, map[token]messageReader{}); f != nil; f = f(s.state) {
+			if s.state.err = s.checkErr(s.state.err, "tds: isolation level set failed", true); s.state.err != nil {
+				s.valid = false
+				return s, s.state.err
+			}
 		}
 	}
 	_, err := s.simpleExec(ctx, `begin tran
@@ -446,7 +462,7 @@ func (s *session) simpleQuery(ctx context.Context, query string) (rows *Rows, er
 	}
 
 	// send query
-	if err := s.b.Send(ctx, netlib.Normal, &language{msg: newMsg(Language), query: query}); err != nil {
+	if err := s.b.send(ctx, normalPacket, &language{msg: newMsg(languageToken), query: query}); err != nil {
 		s.valid = false
 		return &emptyRows, s.checkErr(err, "tds: query send failed", false)
 	}
@@ -527,52 +543,18 @@ func (s *session) clearResult() {
 	s.res = &Result{lastError: nil, s: s}
 }
 
-// process all common tokens (doneToken, doneInProc, envChange, info, etc)
-//
-// when a matching token is found in the messages map,
-// it will read it from the wire and return only if doBreak is true.
-// This is usefull to give the possibility for the caller to change a state
-// before processing other messages from this stream.
+// returns a brand new netlib state
+func newState(ctx context.Context, msg map[token]messageReader,
+	handler func(token) error) *state {
+	return &state{msg: msg, ctx: ctx, handler: handler}
+}
+
+// initiates a new netlib state and reads first message.
+// Will also return a state function to read next message.
 func (s *session) processResponse(ctx context.Context,
-	messages map[byte]netlib.Messager, doBreak bool) (byte, error) {
-
-	return s.b.Receive(ctx,
-		messages,
-		func(t byte, doBreak bool) (bool, error) {
-			var err error
-			// process all common tokens (doneToken, doneInProc, envChange, info, etc)
-			// this will fill the result structure, the sqlMessages array, etc
-			switch token(t) {
-			default:
-				s.prev = token(t)
-				if doBreak {
-					return doBreak, nil
-				}
-			case SQLMessage:
-				err = s.processsqlMessage()
-			case EnvChange:
-				err = s.processEnvChange()
-			case ReturnStatus:
-				err = s.processReturnStatus()
-			case DoneProc, DoneInProc, Done:
-				// last message for this stream
-				err = s.processDone(token(t))
-			}
-			s.prev = token(t)
-
-			// error was found, return now to caller.
-			// Typically processDone returns an error
-			// when a critical sybase error was faced during processing of the rows.
-			// We need to make this error bubbles up.
-			if err != nil {
-				return true, err
-			}
-			return false, err
-		},
-		doBreak,
-		func(t byte) netlib.Messager {
-			return newMsg(token(t))
-		})
+	messages map[token]messageReader) stateFn {
+	s.state.ctx, s.state.msg = ctx, messages
+	return s.b.receive(s.state)
 }
 
 // process the error/info messages and determine if there's an error
@@ -627,17 +609,12 @@ func (s *session) processEnvChange() (err error) {
 // process the done token's information (row count, error status, final ?)
 func (s *session) processDone(t token) (err error) {
 	// ignore most doneInProc tokens
-	if t == DoneInProc && !(s.prev == Row ||
-		s.prev == CmpRow || s.prev == Done ||
-		s.prev == ColumnFmt || s.prev == CmpRowFmt ||
-		s.prev == WideColumnFmt) {
+	if t == doneInProcToken && s.done.status&doneProc == 0 {
 		return nil
 	}
 
 	// get row count if any
-	if s.done.status&doneCount != 0 ||
-		s.done.status&doneProcCount != 0 ||
-		(s.done.status&doneProc != 0 && s.prev == Done) {
+	if s.done.status&doneCount != 0 || s.done.status&doneProc != 0 {
 		// done with doneProc set will contain
 		// the row count for inserts in prepared statements when "send doneinproc" is 0
 		s.res.hasAffectedRows = true

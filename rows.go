@@ -7,8 +7,6 @@ import (
 	"io"
 	"reflect"
 	"sync"
-
-	"github.com/thda/tds/netlib"
 )
 
 // Rows information, columns and data
@@ -27,40 +25,41 @@ type Rows struct {
 	tableName   *tableName
 	columnsInfo *colInfo
 	// map indicating which tokens are stored where when processing response
-	messageMap       map[byte]netlib.Messager
+	messageMap       map[token]messageReader
 	hasNextResultSet bool // true if another resultSet is comming
 	hasCmpInfo       bool // true if this is a computed column result set
 	isCmpRow         bool // if the returned row is a computed row
 	err              error
 	ctx              context.Context
+	f                stateFn
 }
 
 // rows free list
 var rowPool = sync.Pool{
 	New: func() interface{} {
-		rows := &Rows{row: &row{msg: newMsg(Row)},
-			cmpColumns:  &cmpColumns{msg: newMsg(CmpRowFmt)},
-			columns:     &columns{msg: newMsg(ColumnFmt)},
-			wideColumns: &columns{msg: newMsg(WideColumnFmt), flags: wide},
-			tableName:   &tableName{msg: newMsg(TableName)},
-			params:      &columns{msg: newMsg(ColumnFmt), flags: param},
-			wideParams:  &columns{msg: newMsg(WideColumnFmt), flags: wide | param},
-			columnsInfo: &colInfo{msg: newMsg(ColumnInfo)},
-			cmpRow:      &cmpRow{msg: newMsg(CmpRow), infos: make(map[uint16]cmpColumns)}}
+		rows := &Rows{row: &row{msg: newMsg(rowToken)},
+			cmpColumns:  &cmpColumns{msg: newMsg(cmpRowFmtToken)},
+			columns:     &columns{msg: newMsg(columnFmtToken)},
+			wideColumns: &columns{msg: newMsg(wideColumnFmtToken), flags: wide},
+			tableName:   &tableName{msg: newMsg(tableNameToken)},
+			params:      &columns{msg: newMsg(columnFmtToken), flags: param},
+			wideParams:  &columns{msg: newMsg(wideColumnFmtToken), flags: wide | param},
+			columnsInfo: &colInfo{msg: newMsg(columnInfoToken)},
+			cmpRow:      &cmpRow{msg: newMsg(cmpRowToken), infos: make(map[uint16]cmpColumns)}}
 
 		// where to store the token...
-		rows.messageMap = map[byte]netlib.Messager{
-			byte(CmpRow):        rows.cmpRow,
-			byte(CmpRowFmt):     rows.cmpColumns,
-			byte(Row):           rows.row,
-			byte(WideColumnFmt): rows.wideColumns,
-			byte(ColumnFmt):     rows.columns,
+		rows.messageMap = map[token]messageReader{
+			cmpRowToken:        rows.cmpRow,
+			cmpRowFmtToken:     rows.cmpColumns,
+			rowToken:           rows.row,
+			wideColumnFmtToken: rows.wideColumns,
+			columnFmtToken:     rows.columns,
 			// params are handled like rows
-			byte(Param):      rows.row,
-			byte(ParamFmt2):  rows.wideParams,
-			byte(ParamFmt):   rows.params,
-			byte(ColumnInfo): rows.columnsInfo,
-			byte(TableName):  rows.tableName,
+			paramToken:      rows.row,
+			paramFmt2Toekn:  rows.wideParams,
+			paramFmtToken:   rows.params,
+			columnInfoToken: rows.columnsInfo,
+			tableNameToken:  rows.tableName,
 		}
 		rows.columnsInfo.tables = rows.tableName
 		return rows
@@ -177,79 +176,78 @@ func (r *Rows) Next(dest []driver.Value) (err error) {
 		// see if there is another result set afterwards
 		// TODO: check if other types of token can be sent
 		// between a cmpRowToken and another rowToken
-		next, err := r.s.b.Peek()
+		next, err := r.s.b.peek()
 		if err != nil && err != io.EOF {
 			return fmt.Errorf("tds: fetching computed result failed: %s", err)
 		}
-		r.hasNextResultSet = token(next) == Row
+		r.hasNextResultSet = token(next) == rowToken
 		r.columnFmts = r.row.columns
 		return nil
 	}
 
-	tok, err := r.s.processResponse(r.ctx, r.messageMap, true)
+	// read next message
+	for f := r.s.processResponse(r.ctx, r.messageMap); f != nil; f = f(r.s.state) {
+		t := r.s.state.t
+
+		switch t {
+		case paramToken:
+			return r.Next(dest)
+		case rowToken:
+			copy(dest, r.row.data)
+			return nil
+		case tableNameToken, columnInfoToken, doneToken:
+			return r.Next(dest)
+		case wideColumnFmtToken, columnFmtToken, paramFmtToken, paramFmt2Toekn:
+			switch t {
+			case wideColumnFmtToken:
+				r.row.columns = r.wideColumns.fmts
+			case columnFmtToken:
+				r.row.columns = r.columns.fmts
+			// ignore parameters
+			case paramFmt2Toekn:
+				r.row.columns = r.wideParams.fmts
+				return r.Next(dest)
+			case paramFmtToken:
+				r.row.columns = r.params.fmts
+				return r.Next(dest)
+			}
+			r.columnFmts = r.row.columns
+			r.columnsInfo.columns = &r.columnFmts
+			r.hasCmpInfo = false
+			r.hasNextResultSet = true
+			return io.EOF
+		case cmpRowToken:
+			// indicate that the next row is a compute result set
+			r.isCmpRow = true
+			r.hasNextResultSet = true
+			r.columnFmts = r.cmpColumns.fmts
+			return io.EOF
+		case cmpRowFmtToken:
+			// computed info found
+			r.hasCmpInfo = true
+
+			// build the label from the column info.
+			// not optimized, unfrequent operation
+			for i, column := range r.cmpColumns.fmts {
+				label := cmpLabels[column.cmpOperator] + "("
+				if len(r.columnFmts) <= int(column.cmpOperand-1) ||
+					r.columnFmts[column.cmpOperand-1].name == "" {
+					label += "<unknown>"
+				} else {
+					label += r.columnFmts[column.cmpOperand-1].name
+				}
+				label += ")"
+				r.cmpColumns.fmts[i].name = label
+			}
+			r.cmpRow.infos[r.cmpColumns.id] = *r.cmpColumns
+			return r.Next(dest)
+		}
+	}
 
 	// a done token without doneMoreResults set
 	// will cause processResponse to return EOF and quit here
-	if err != nil {
-		r.err = err
-		return err
-	}
-
-	switch token(tok) {
-	default:
-		return fmt.Errorf("tds: unexpected token: %s", token(tok))
-	case Param:
-		return r.Next(dest)
-	case Row:
-		copy(dest, r.row.data)
-		return nil
-	case TableName, ColumnInfo, Done:
-		return r.Next(dest)
-	case WideColumnFmt, ColumnFmt, ParamFmt, ParamFmt2:
-		switch token(tok) {
-		case WideColumnFmt:
-			r.row.columns = r.wideColumns.fmts
-		case ColumnFmt:
-			r.row.columns = r.columns.fmts
-		// ignore parameters
-		case ParamFmt2:
-			r.row.columns = r.wideParams.fmts
-			return r.Next(dest)
-		case ParamFmt:
-			r.row.columns = r.params.fmts
-			return r.Next(dest)
-		}
-		r.columnFmts = r.row.columns
-		r.columnsInfo.columns = &r.columnFmts
-		r.hasCmpInfo = false
-		r.hasNextResultSet = true
-		return io.EOF
-	case CmpRow:
-		// indicate that the next row is a compute result set
-		r.isCmpRow = true
-		r.hasNextResultSet = true
-		r.columnFmts = r.cmpColumns.fmts
-		return io.EOF
-	case CmpRowFmt:
-		// computed info found
-		r.hasCmpInfo = true
-
-		// build the label from the column info.
-		// not optimized, unfrequent operation
-		for i, column := range r.cmpColumns.fmts {
-			label := cmpLabels[column.cmpOperator] + "("
-			if len(r.columnFmts) <= int(column.cmpOperand-1) ||
-				r.columnFmts[column.cmpOperand-1].name == "" {
-				label += "<unknown>"
-			} else {
-				label += r.columnFmts[column.cmpOperand-1].name
-			}
-			label += ")"
-			r.cmpColumns.fmts[i].name = label
-		}
-		r.cmpRow.infos[r.cmpColumns.id] = *r.cmpColumns
-		return r.Next(dest)
-	}
+	r.err = r.s.state.err
+	return r.err
 }
 
 // ComputedColumnInfo returns the operator and the operand
