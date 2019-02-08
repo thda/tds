@@ -400,24 +400,19 @@ func (b *buf) send(ctx context.Context, pt packetType, msgs ...messageReaderWrit
 
 // netlib session state
 type state struct {
-	t       token
-	prev    token // previous token
-	handler func(t token) error
-	msg     map[token]messageReader
-	err     error
+	t       token                   // last token read
+	prev    token                   // previous token
+	handler func(t token) error     // message handler to run after read
+	msg     map[token]messageReader // messages to read into
+	err     error                   // error faced during read
 	ctx     context.Context
 }
 
 // session state
 type stateFn func(*state) stateFn
 
-// receive reads messages given in a map, and run a given message handler after each message read.
-//
-// When the handler returns true, it will return instantly and quit processing messages.
-// When there is not matching message in the map, the getMsg function will be called
-// to get the message's length and skip it.
-//
-// Returns the token of the last parsed message, and eventually an error
+// receive reads messages and updates the state accordingly.
+// returns a state function to process next message.
 func (b *buf) receive(s *state) stateFn {
 	defer func() {
 		s.prev = s.t
