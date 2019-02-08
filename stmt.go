@@ -63,7 +63,7 @@ func newStmt(ctx context.Context, s *session, query string) (*Stmt, error) {
 
 	// parse parameters info and return status
 	// the server will spew out a rowfmt, but it's safe to ignore it, it will be resent
-	for f := s.processResponse(ctx,
+	for f := s.initState(ctx,
 		map[token]messageReader{dynamic2Token: st.d,
 			paramFmtToken: params, paramFmt2Toekn: wideParams}); f != nil; f = f(s.state) {
 		if s.state.err = s.checkErr(err, "tds: Prepare failed", true); err != nil {
@@ -216,7 +216,7 @@ func (st *Stmt) Close() error {
 
 	// get response
 	// TODO: parse dynamic token to get status
-	for f := st.s.processResponse(nil, nil); f != nil; f = f(st.s.state) {
+	for f := st.s.initState(nil, nil); f != nil; f = f(st.s.state) {
 		if err := st.s.checkErr(st.s.state.err, "tds: close failed", true); err != nil {
 			return err
 		}

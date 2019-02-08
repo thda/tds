@@ -31,7 +31,6 @@ type Rows struct {
 	isCmpRow         bool // if the returned row is a computed row
 	err              error
 	ctx              context.Context
-	f                stateFn
 }
 
 // rows free list
@@ -186,7 +185,7 @@ func (r *Rows) Next(dest []driver.Value) (err error) {
 	}
 
 	// read next message
-	for f := r.s.processResponse(r.ctx, r.messageMap); f != nil; f = f(r.s.state) {
+	for f := r.s.initState(r.ctx, r.messageMap); f != nil; f = f(r.s.state) {
 		t := r.s.state.t
 
 		switch t {

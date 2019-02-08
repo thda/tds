@@ -9,6 +9,5 @@ Version 0.5
 
 Version 1
 - text pointers??
-- review API/visibility
 - protocol documentation
 - tds stream multiplexing and client side cursors, if needed

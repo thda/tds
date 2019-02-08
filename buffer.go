@@ -278,7 +278,7 @@ func (b *buf) peek() (out byte, err error) {
 // and writes it to the underlying writer.
 // This is used when the tds needs a length right after the token
 // for non-fixed length messages
-func (b *buf) writeMsg(msg messageWriter) (err error) {
+func (b *buf) writeMsg(msg messageReaderWriter) (err error) {
 	b.mb.Reset()
 
 	if err = msg.Write(&b.me); err != nil {
@@ -345,7 +345,7 @@ func (b *buf) readMsg(msg messageReader) (err error) {
 }
 
 // skipMsg skips a message according to its length.
-func (b *buf) skipMsg(msg messager) (err error) {
+func (b *buf) skipMsg(msg messageReader) (err error) {
 	var size int
 	// check for existence
 

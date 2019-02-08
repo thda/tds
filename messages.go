@@ -11,31 +11,23 @@ import (
 	"errors"
 )
 
-// messager is the interface which describes
+// messagerReader is the interface which describes
 // the messages sent by the netlib buffer.
 //
 // A message should provide serialization functions
 // as well as a token and clues on its size.
-type messager interface {
+type messageReader interface {
 	Token() token
 	Size() uint8
 	SizeLen() uint8
 	LimitRead() bool
-}
-
-type messageReader interface {
-	messager
 	Read(*bin.Encoder) error
 }
 
-type messageWriter interface {
-	messager
-	Write(*bin.Encoder) error
-}
-
+// messageReaderWriter is implemented by messages
+// which can be read an written
 type messageReaderWriter interface {
-	messager
-	Read(*bin.Encoder) error
+	messageReader
 	Write(*bin.Encoder) error
 }
 

@@ -119,8 +119,7 @@ func newSession(prm connParams) (s *session, err error) {
 	s.b.defaultMessageMap = s.messageMap
 
 	// init state
-	s.state = &state{}
-	s.state.handler = func(t token) error {
+	s.state = &state{handler: func(t token) error {
 		var err error
 		// process all common tokens (doneToken, doneInProc, envChange, info, etc)
 		// this will fill the result structure, the sqlMessages array, etc
@@ -141,7 +140,7 @@ func newSession(prm connParams) (s *session, err error) {
 		// when a critical sybase error was faced during processing of the rows.
 		// We need to make this error bubbles up.
 		return err
-	}
+	}}
 
 	// now log in
 	if err = s.login(prm); err != nil {
@@ -196,13 +195,12 @@ func (s *session) login(prm connParams) (err error) {
 
 	// get login ack/auth challenge message
 loginResponse:
-	for f := s.processResponse(ctx,
+	for f := s.initState(ctx,
 		map[token]messageReader{loginAckToken: loginAck,
 			capabilitiesToken: &s.capabilities,
 			paramFmtToken:     pf,
 			paramToken:        p}); f != nil; f = f(s.state) {
-		switch s.state.t {
-		case paramFmtToken:
+		if s.state.t == paramFmtToken {
 			// bind the param descriptor and the param
 			p.columns = pf.fmts
 		}
@@ -395,7 +393,7 @@ func (s *session) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx
 			return s, s.checkErr(err, "tds: isolation level set failed", false)
 		}
 
-		for f := s.processResponse(ctx, map[token]messageReader{}); f != nil; f = f(s.state) {
+		for f := s.initState(ctx, map[token]messageReader{}); f != nil; f = f(s.state) {
 			if s.state.err = s.checkErr(s.state.err, "tds: isolation level set failed", true); s.state.err != nil {
 				s.valid = false
 				return s, s.state.err
@@ -551,7 +549,7 @@ func newState(ctx context.Context, msg map[token]messageReader,
 
 // initiates a new netlib state and reads first message.
 // Will also return a state function to read next message.
-func (s *session) processResponse(ctx context.Context,
+func (s *session) initState(ctx context.Context,
 	messages map[token]messageReader) stateFn {
 	s.state.ctx, s.state.msg = ctx, messages
 	return s.b.receive(s.state)
