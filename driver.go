@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"sync"
 )
 
 const defaultCharset = "utf8"
@@ -169,6 +170,7 @@ type ErrorHandler interface {
 
 // register the driver
 type sybDriver struct {
+	*sync.Mutex
 	IsError func(s SybError) bool
 }
 
@@ -186,6 +188,8 @@ func (d *sybDriver) Open(dsn string) (driver.Conn, error) {
 // The function shall accept an SQL Message and return a boolean
 // indicating if this message is indeed a critical error.
 func (d *sybDriver) SetErrorhandler(fn func(s SybError) bool) {
+	d.Lock()
+	defer d.Unlock()
 	d.IsError = fn
 }
 

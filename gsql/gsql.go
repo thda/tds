@@ -20,7 +20,6 @@ import (
 	"github.com/xo/tblfmt"
 
 	"github.com/chzyer/readline"
-	"github.com/thda/tablewriter"
 )
 
 var (
@@ -236,20 +235,6 @@ func newReadLineBatchReader(conn *sql.DB) (SQLBatchReader, error) {
 	}
 
 	return &readLineBatchReader{Instance: rl, conn: conn}, err
-}
-
-func newTable(out io.Writer) (table *tablewriter.Table) {
-	table = tablewriter.New(out)
-	switch theme {
-	default:
-	case "ASCIICompact":
-		table.Theme = tablewriter.ASCIICompact
-	case "UtfCompact":
-		table.Theme = tablewriter.UtfCompact
-	}
-	//table.SetColWidth(10000)
-	table.RowSep = false
-	return table
 }
 
 func main() {

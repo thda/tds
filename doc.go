@@ -64,7 +64,7 @@ The most common ones are:
  - readTimeout - read timeout in seconds.
  - writeTimeout - write timeout in seconds.
  - textSize - max size of textsize fields in bytes.
- It is suggested to raise it to avoid truncation.
+   It is suggested to raise it to avoid truncation.
 
 Less frequently used ones:
 
@@ -178,7 +178,7 @@ You can use stmt_test.go and session_test.go for sample usage, as follows:
 
 License
 
-This driver is release under the go license
+This driver is released under the go license
 
 Credits
 
