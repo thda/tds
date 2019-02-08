@@ -231,14 +231,14 @@ func encodeNumeric(e *binary.Encoder, s interface{}, i colType) (err error) {
 
 	// write to the wire as money of numeric, depending on data type
 	switch i.dataType {
-	case Smallmoney:
+	case smallmoneyType:
 		intVal, _ := num.r.Float64()
 		e.WriteInt32(int32(intVal))
-	case MoneyN, Money:
+	case moneyNType, moneyType:
 		intVal := num.r.Num().Int64()
 		e.WriteUint32(uint32(intVal >> 32))
 		e.WriteInt32(int32(intVal))
-	case Decimal, Numeric, DecimalN, NumericN:
+	case decimalType, numericType, decimalNType, numericNType:
 		// length
 		arraySize := numericBytes[int(i.precision)]
 		e.WriteInt8(int8(arraySize))

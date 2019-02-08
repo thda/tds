@@ -851,8 +851,8 @@ func (l *login) Read(e *bin.Encoder) error {
 
 // login status
 const (
-	LoginSuccessToken = 0x05
-	LoginFailedToken  = 0x06
+	loginSuccessToken = 0x05
+	loginFailedToken  = 0x06
 )
 
 // LoginAck is the login ack packet
@@ -867,7 +867,7 @@ type loginAck struct {
 
 // Write serializes a TdsLoginAck struct
 func (l loginAck) Write(e *bin.Encoder) error {
-	e.WriteByte(LoginSuccessToken)
+	e.WriteByte(loginSuccessToken)
 	e.Write(l.tdsVersion[:])
 	e.WriteStringWithLen(8, l.server)
 	e.Write(l.serverVersion[:])

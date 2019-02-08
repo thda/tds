@@ -251,7 +251,7 @@ func (t colType) length() (int64, bool) {
 
 	// long types
 	if t.options&isLong != 0 {
-		if t.dataType == LongChar {
+		if t.dataType == longCharType {
 			return int64(t.size / 2), true
 		}
 		if t.encodingProps.scanType == reflect.TypeOf("") {
@@ -336,7 +336,7 @@ func (f colFmt) Write(e *binary.Encoder, flags int) error {
 		return err
 	}
 	// Class for long TDS blobs
-	if f.dataType == ExtendedType {
+	if f.dataType == extendedType {
 		e.WriteStringWithLen(16, f.classID)
 	}
 	err := e.Err()
@@ -365,7 +365,7 @@ func (f *colFmt) Read(e *binary.Encoder, flags int) error {
 	}
 
 	// Class for long TDS blobs
-	if f.dataType == ExtendedType {
+	if f.dataType == extendedType {
 		f.classID, _ = e.ReadString(16)
 	}
 

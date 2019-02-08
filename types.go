@@ -20,60 +20,60 @@ type dataType byte
 
 // data types
 const (
-	UInt4        dataType = 0x1d //  29
-	Image        dataType = 0x22 //  34
-	Text         dataType = 0x23 //  35
-	ExtendedType dataType = 0x24 //  36
+	uInt4Type    dataType = 0x1d //  29
+	imageType    dataType = 0x22 //  34
+	textType     dataType = 0x23 //  35
+	extendedType dataType = 0x24 //  36
 	// Timestamp      dataType = 0x25 //  37
-	Varbinary dataType = 0x25 //  37
-	IntN      dataType = 0x26 //  38
+	varbinaryType dataType = 0x25 //  37
+	intNType      dataType = 0x26 //  38
 	// Sysname        dataType = 0x27 //  39
-	Varchar dataType = 0x27 //  39
+	varcharType dataType = 0x27 //  39
 	// Nvarchar       dataType = 0x27 //  39
 	// Longsysname    dataType = 0x27 //  39
-	Binary dataType = 0x2d //  45
-	Char   dataType = 0x2f //  47
+	binaryType dataType = 0x2d //  45
+	charType   dataType = 0x2f //  47
 	// Nchar          dataType = 0x2f //  47
-	Tinyint        dataType = 0x30 //  48
-	Date           dataType = 0x31 //  49
-	Bit            dataType = 0x32 //  50
-	Time           dataType = 0x33 //  51
-	Smallint       dataType = 0x34 //  52
-	Decimal        dataType = 0x37 //  55
-	Int            dataType = 0x38 //  56
-	Smalldatetime  dataType = 0x3a //  58
-	Real           dataType = 0x3b //  59
-	Money          dataType = 0x3c //  60
-	Datetime       dataType = 0x3d //  61
-	Float          dataType = 0x3e //  62
-	Numeric        dataType = 0x3f //  63
-	UTinyint       dataType = 0x40 //  64
-	USmallint      dataType = 0x41 //  65
-	UInt           dataType = 0x42 //  66
-	UBigint        dataType = 0x43 //  67
-	UIntN          dataType = 0x44 //  68
-	BigDateTimeN   dataType = 0x50 //  80
-	DecimalN       dataType = 0x6a // 106
-	NumericN       dataType = 0x6c // 108
-	FloatN         dataType = 0x6d // 109
-	MoneyN         dataType = 0x6e // 110
-	DatetimeN      dataType = 0x6f // 111
-	Smallmoney     dataType = 0x7a // 122
-	DateN          dataType = 0x7b // 123
-	Unichar        dataType = 0x87 // 135
-	TimeN          dataType = 0x93 // 147
-	Univarchar     dataType = 0x9b // 155
-	TextLocator    dataType = 0xa9 // 169
-	ImageLocator   dataType = 0xaa // 170
-	UnitextLocator dataType = 0xab // 171
-	Unitext        dataType = 0xae // 174
-	LongChar       dataType = 0xaf // 175
-	BigdatetimeN   dataType = 0xbb // 187
-	BigtimeN       dataType = 0xbc // 188
-	Bigdatetime    dataType = 0xbd // 189
-	Bigtime        dataType = 0xbe // 190
-	Bigint         dataType = 0xbf // 191
-	LongBinary     dataType = 0xe1 // 225
+	tinyintType        dataType = 0x30 //  48
+	dateType           dataType = 0x31 //  49
+	bitType            dataType = 0x32 //  50
+	timeType           dataType = 0x33 //  51
+	smallintType       dataType = 0x34 //  52
+	decimalType        dataType = 0x37 //  55
+	intType            dataType = 0x38 //  56
+	smalldatetimeType  dataType = 0x3a //  58
+	realType           dataType = 0x3b //  59
+	moneyType          dataType = 0x3c //  60
+	datetimeType       dataType = 0x3d //  61
+	floatType          dataType = 0x3e //  62
+	numericType        dataType = 0x3f //  63
+	uTinyintType       dataType = 0x40 //  64
+	uSmallintType      dataType = 0x41 //  65
+	uIntType           dataType = 0x42 //  66
+	uBigintType        dataType = 0x43 //  67
+	uIntNType          dataType = 0x44 //  68
+	bigDateTimeNType   dataType = 0x50 //  80
+	decimalNType       dataType = 0x6a // 106
+	numericNType       dataType = 0x6c // 108
+	floatNType         dataType = 0x6d // 109
+	moneyNType         dataType = 0x6e // 110
+	datetimeNType      dataType = 0x6f // 111
+	smallmoneyType     dataType = 0x7a // 122
+	dateNType          dataType = 0x7b // 123
+	unicharType        dataType = 0x87 // 135
+	timeNType          dataType = 0x93 // 147
+	univarcharType     dataType = 0x9b // 155
+	textLocatorType    dataType = 0xa9 // 169
+	imageLocatorType   dataType = 0xaa // 170
+	unitextLocatorType dataType = 0xab // 171
+	unitextType        dataType = 0xae // 174
+	longCharType       dataType = 0xaf // 175
+	bigdatetimeNType   dataType = 0xbb // 187
+	bigtimeNType       dataType = 0xbc // 188
+	bigdatetimeType    dataType = 0xbd // 189
+	bigtimeType        dataType = 0xbe // 190
+	bigintType         dataType = 0xbf // 191
+	longBinaryType     dataType = 0xe1 // 225
 )
 
 // Map user type with its concrete type.
@@ -84,57 +84,57 @@ const (
 // Another example is the timestamp, which in actually a varbinary(8).
 // This table establishes the mapping between user type and the underlying data type.
 var concreteTypes = []dataType{
-	1:  Char,
-	2:  Varchar,
-	3:  Binary,
-	4:  Varbinary,
-	5:  Tinyint,
-	6:  Smallint,
-	7:  Int,
-	8:  Float,
-	10: Numeric,
-	11: Money,
-	12: Datetime,
-	13: IntN,
-	14: FloatN,
-	15: DatetimeN,
-	16: Bit,
-	17: MoneyN,
-	18: Varchar,
-	19: Text,
-	20: Image,
-	21: Smallmoney,
-	22: Smalldatetime,
-	23: Real,
-	24: Char,
-	25: Varchar,
-	26: Decimal,
-	27: DecimalN,
-	28: NumericN,
-	29: UInt,
-	33: Bigint,
-	34: Unichar,
-	35: Univarchar,
-	36: Unitext,
-	37: Date,
-	38: Time,
-	39: DateN,
-	40: TimeN,
-	42: IntN,
-	43: Bigint,
-	44: UIntN,
-	45: UIntN,
-	46: UBigint,
-	47: UIntN,
-	48: Bigdatetime,
-	49: Bigtime,
-	50: BigdatetimeN,
-	51: BigtimeN,
-	53: Decimal,
-	54: Decimal,
-	55: Decimal,
-	80: Varbinary,
-	84: Bigint,
+	1:  charType,
+	2:  varcharType,
+	3:  binaryType,
+	4:  varbinaryType,
+	5:  tinyintType,
+	6:  smallintType,
+	7:  intType,
+	8:  floatType,
+	10: numericType,
+	11: moneyType,
+	12: datetimeType,
+	13: intNType,
+	14: floatNType,
+	15: datetimeNType,
+	16: bitType,
+	17: moneyNType,
+	18: varcharType,
+	19: textType,
+	20: imageType,
+	21: smallmoneyType,
+	22: smalldatetimeType,
+	23: realType,
+	24: charType,
+	25: varcharType,
+	26: decimalType,
+	27: decimalNType,
+	28: numericNType,
+	29: uIntType,
+	33: bigintType,
+	34: unicharType,
+	35: univarcharType,
+	36: unitextType,
+	37: dateType,
+	38: timeType,
+	39: dateNType,
+	40: timeNType,
+	42: intNType,
+	43: bigintType,
+	44: uIntNType,
+	45: uIntNType,
+	46: uBigintType,
+	47: uIntNType,
+	48: bigdatetimeType,
+	49: bigtimeType,
+	50: bigdatetimeNType,
+	51: bigtimeNType,
+	53: decimalType,
+	54: decimalType,
+	55: decimalType,
+	80: varbinaryType,
+	84: bigintType,
 }
 
 // typeAttribute is the struct containing all the attributes of a sybase type
@@ -200,65 +200,65 @@ var byteFct = func(*colFmt) driver.ValueConverter { return byteConv }
 
 // typeAttributes is a table which contains the attributes for each Token
 var typeAttributes = map[dataType]typeAttribute{
-	Binary:        {isConcrete | hasLength, "binary", 0, reflect.TypeOf([]byte{}), Binary, encodeBinary, decodeBinary, byteFct},
-	Bit:           {isConcrete, "bit", 1, reflect.TypeOf(true), Bit, encodeBool, decodeBool, func(*colFmt) driver.ValueConverter { return boolConv }},
-	Char:          {isConcrete | hasLength, "char", 0, reflect.TypeOf(""), Char, encodeChar, decodeChar, charFct},
-	Datetime:      {isConcrete, "datetime", 8, reflect.TypeOf(time.Time{}), DatetimeN, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return dateTimeConv }},
-	Date:          {isConcrete, "date", 4, reflect.TypeOf(time.Time{}), DateN, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return dateConv }},
-	Time:          {isConcrete, "time", 4, reflect.TypeOf(time.Time{}), TimeN, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return timeConv }},
-	TimeN:         {hasLength | isNullable, "time", 4, reflect.TypeOf(time.Time{}), TimeN, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return timeConv }},
-	Smalldatetime: {isConcrete, "smalldatetime", 4, reflect.TypeOf(time.Time{}), DatetimeN, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return smallDateTimeConv }},
-	DatetimeN:     {hasLength | isNullable, "datetime", 8, reflect.TypeOf(time.Time{}), DatetimeN, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return dateTimeConv }},
-	DateN:         {hasLength | isNullable, "datetime", 4, reflect.TypeOf(time.Time{}), DatetimeN, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return dateConv }},
-	Bigdatetime:   {hasLength | hasPrec | isConcrete, "bigdatetime", 8, reflect.TypeOf(time.Time{}), BigdatetimeN, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return bigDateTimeConv }},
-	BigdatetimeN:  {hasLength | hasPrec | isNullable, "bigdatetime", 8, reflect.TypeOf(time.Time{}), BigdatetimeN, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return bigDateTimeConv }},
-	Bigtime:       {hasLength | hasPrec | isConcrete, "bigtime", 8, reflect.TypeOf(time.Time{}), BigtimeN, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return timeConv }},
-	BigtimeN:      {hasLength | hasPrec | isNullable, "bigtime", 8, reflect.TypeOf(time.Time{}), BigtimeN, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return timeConv }},
-	Decimal: {isConcrete | hasLength | hasPrec | hasScale, "decimal", 0, reflect.TypeOf(Num{}), NumericN, encodeNumeric, decodeNumeric, func(f *colFmt) driver.ValueConverter {
+	binaryType:        {isConcrete | hasLength, "binary", 0, reflect.TypeOf([]byte{}), binaryType, encodeBinary, decodeBinary, byteFct},
+	bitType:           {isConcrete, "bit", 1, reflect.TypeOf(true), bitType, encodeBool, decodeBool, func(*colFmt) driver.ValueConverter { return boolConv }},
+	charType:          {isConcrete | hasLength, "char", 0, reflect.TypeOf(""), charType, encodeChar, decodeChar, charFct},
+	datetimeType:      {isConcrete, "datetime", 8, reflect.TypeOf(time.Time{}), datetimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return dateTimeConv }},
+	dateType:          {isConcrete, "date", 4, reflect.TypeOf(time.Time{}), dateNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return dateConv }},
+	timeType:          {isConcrete, "time", 4, reflect.TypeOf(time.Time{}), timeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return timeConv }},
+	timeNType:         {hasLength | isNullable, "time", 4, reflect.TypeOf(time.Time{}), timeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return timeConv }},
+	smalldatetimeType: {isConcrete, "smalldatetime", 4, reflect.TypeOf(time.Time{}), datetimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return smallDateTimeConv }},
+	datetimeNType:     {hasLength | isNullable, "datetime", 8, reflect.TypeOf(time.Time{}), datetimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return dateTimeConv }},
+	dateNType:         {hasLength | isNullable, "datetime", 4, reflect.TypeOf(time.Time{}), datetimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return dateConv }},
+	bigdatetimeType:   {hasLength | hasPrec | isConcrete, "bigdatetime", 8, reflect.TypeOf(time.Time{}), bigdatetimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return bigDateTimeConv }},
+	bigdatetimeNType:  {hasLength | hasPrec | isNullable, "bigdatetime", 8, reflect.TypeOf(time.Time{}), bigdatetimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return bigDateTimeConv }},
+	bigtimeType:       {hasLength | hasPrec | isConcrete, "bigtime", 8, reflect.TypeOf(time.Time{}), bigtimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return timeConv }},
+	bigtimeNType:      {hasLength | hasPrec | isNullable, "bigtime", 8, reflect.TypeOf(time.Time{}), bigtimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return timeConv }},
+	decimalType: {isConcrete | hasLength | hasPrec | hasScale, "decimal", 0, reflect.TypeOf(Num{}), numericNType, encodeNumeric, decodeNumeric, func(f *colFmt) driver.ValueConverter {
 		return &numConverter{precision: f.precision, scale: f.scale}
 	}},
-	DecimalN: {hasLength | hasPrec | hasScale, "decimal", 0, reflect.TypeOf(Num{}), NumericN, encodeNumeric, decodeNumeric, func(f *colFmt) driver.ValueConverter {
+	decimalNType: {hasLength | hasPrec | hasScale, "decimal", 0, reflect.TypeOf(Num{}), numericNType, encodeNumeric, decodeNumeric, func(f *colFmt) driver.ValueConverter {
 		return &numConverter{precision: f.precision, scale: f.scale}
 	}},
-	Numeric: {isConcrete | hasLength | hasPrec | hasScale, "numeric", 0, reflect.TypeOf(Num{}), NumericN, encodeNumeric, decodeNumeric, func(f *colFmt) driver.ValueConverter {
+	numericType: {isConcrete | hasLength | hasPrec | hasScale, "numeric", 0, reflect.TypeOf(Num{}), numericNType, encodeNumeric, decodeNumeric, func(f *colFmt) driver.ValueConverter {
 		return &numConverter{precision: f.precision, scale: f.scale}
 	}},
-	NumericN: {hasLength | hasPrec | hasScale | isNullable, "numeric", 0, reflect.TypeOf(Num{}), NumericN, encodeNumeric, decodeNumeric, func(f *colFmt) driver.ValueConverter {
+	numericNType: {hasLength | hasPrec | hasScale | isNullable, "numeric", 0, reflect.TypeOf(Num{}), numericNType, encodeNumeric, decodeNumeric, func(f *colFmt) driver.ValueConverter {
 		return &numConverter{precision: f.precision, scale: f.scale}
 	}},
-	Real:      {isConcrete, "real", 4, reflect.TypeOf(float64(0)), FloatN, encodeReal, decodeReal, func(*colFmt) driver.ValueConverter { return float32Conv }},
-	Float:     {isConcrete, "float", 8, reflect.TypeOf(float64(0)), FloatN, encodeFloat, decodeFloat, func(*colFmt) driver.ValueConverter { return float64Conv }},
-	FloatN:    {isNullable, "float", 0, reflect.TypeOf(float64(0)), FloatN, encodeFloat, decodeFloat, func(*colFmt) driver.ValueConverter { return float64Conv }},
-	Tinyint:   {isConcrete, "tinyint", 1, reflect.TypeOf(int64(0)), IntN, encodeTinyint, decodeTinyint, func(*colFmt) driver.ValueConverter { return tinyIntConv }},
-	Smallint:  {isConcrete, "smallint", 2, reflect.TypeOf(int64(0)), IntN, encodeSmallint, decodeSmallint, func(*colFmt) driver.ValueConverter { return smallIntConv }},
-	Int:       {isConcrete, "int", 4, reflect.TypeOf(int64(0)), IntN, encodeInt, decodeInt, func(*colFmt) driver.ValueConverter { return intConv }},
-	Bigint:    {isConcrete, "bigint", 8, reflect.TypeOf(int64(0)), IntN, encodeBigint, decodeBigint, func(*colFmt) driver.ValueConverter { return bigIntConv }},
-	IntN:      {isNullable, "int", 4, reflect.TypeOf(int64(0)), IntN, encodeInt, decodeIntN, func(*colFmt) driver.ValueConverter { return nullIntConv }},
-	UTinyint:  {isConcrete, "unsigned tinyint", 1, reflect.TypeOf(int64(0)), UIntN, encodeTinyint, decodeTinyint, func(*colFmt) driver.ValueConverter { return tinyIntConv }},
-	USmallint: {isConcrete, "smallint", 2, reflect.TypeOf(int64(0)), UIntN, encodeUSmallint, decodeUSmallint, func(*colFmt) driver.ValueConverter { return uSmallIntConv }},
-	UInt:      {isConcrete, "unsigned int", 4, reflect.TypeOf(int64(0)), UIntN, encodeUInt, decodeUInt, func(*colFmt) driver.ValueConverter { return uIntConv }},
-	UInt4:     {isConcrete, "unsigned int", 4, reflect.TypeOf(int64(0)), UIntN, encodeUInt, decodeInt, func(*colFmt) driver.ValueConverter { return uIntConv }},
-	UBigint:   {isConcrete, "unsigned bigint", 8, reflect.TypeOf(uint64(0)), UIntN, encodeUBigint, decodeUBigint, func(*colFmt) driver.ValueConverter { return uBigIntConv }},
-	UIntN:     {isNullable, "unsigned int", 4, reflect.TypeOf(int64(0)), UIntN, encodeUInt, decodeUIntN, func(*colFmt) driver.ValueConverter { return nullIntConv }},
-	Money: {isConcrete, "money", 8, reflect.TypeOf(Num{}), MoneyN, encodeMoney, decodeMoney, func(f *colFmt) driver.ValueConverter {
+	realType:      {isConcrete, "real", 4, reflect.TypeOf(float64(0)), floatNType, encodeReal, decodeReal, func(*colFmt) driver.ValueConverter { return float32Conv }},
+	floatType:     {isConcrete, "float", 8, reflect.TypeOf(float64(0)), floatNType, encodeFloat, decodeFloat, func(*colFmt) driver.ValueConverter { return float64Conv }},
+	floatNType:    {isNullable, "float", 0, reflect.TypeOf(float64(0)), floatNType, encodeFloat, decodeFloat, func(*colFmt) driver.ValueConverter { return float64Conv }},
+	tinyintType:   {isConcrete, "tinyint", 1, reflect.TypeOf(int64(0)), intNType, encodeTinyint, decodeTinyint, func(*colFmt) driver.ValueConverter { return tinyIntConv }},
+	smallintType:  {isConcrete, "smallint", 2, reflect.TypeOf(int64(0)), intNType, encodeSmallint, decodeSmallint, func(*colFmt) driver.ValueConverter { return smallIntConv }},
+	intType:       {isConcrete, "int", 4, reflect.TypeOf(int64(0)), intNType, encodeInt, decodeInt, func(*colFmt) driver.ValueConverter { return intConv }},
+	bigintType:    {isConcrete, "bigint", 8, reflect.TypeOf(int64(0)), intNType, encodeBigint, decodeBigint, func(*colFmt) driver.ValueConverter { return bigIntConv }},
+	intNType:      {isNullable, "int", 4, reflect.TypeOf(int64(0)), intNType, encodeInt, decodeIntN, func(*colFmt) driver.ValueConverter { return nullIntConv }},
+	uTinyintType:  {isConcrete, "unsigned tinyint", 1, reflect.TypeOf(int64(0)), uIntNType, encodeTinyint, decodeTinyint, func(*colFmt) driver.ValueConverter { return tinyIntConv }},
+	uSmallintType: {isConcrete, "smallint", 2, reflect.TypeOf(int64(0)), uIntNType, encodeUSmallint, decodeUSmallint, func(*colFmt) driver.ValueConverter { return uSmallIntConv }},
+	uIntType:      {isConcrete, "unsigned int", 4, reflect.TypeOf(int64(0)), uIntNType, encodeUInt, decodeUInt, func(*colFmt) driver.ValueConverter { return uIntConv }},
+	uInt4Type:     {isConcrete, "unsigned int", 4, reflect.TypeOf(int64(0)), uIntNType, encodeUInt, decodeInt, func(*colFmt) driver.ValueConverter { return uIntConv }},
+	uBigintType:   {isConcrete, "unsigned bigint", 8, reflect.TypeOf(uint64(0)), uIntNType, encodeUBigint, decodeUBigint, func(*colFmt) driver.ValueConverter { return uBigIntConv }},
+	uIntNType:     {isNullable, "unsigned int", 4, reflect.TypeOf(int64(0)), uIntNType, encodeUInt, decodeUIntN, func(*colFmt) driver.ValueConverter { return nullIntConv }},
+	moneyType: {isConcrete, "money", 8, reflect.TypeOf(Num{}), moneyNType, encodeMoney, decodeMoney, func(f *colFmt) driver.ValueConverter {
 		return &numConverter{precision: 20, scale: 4}
 	}},
-	Smallmoney: {isConcrete, "smallmoney", 4, reflect.TypeOf(Num{}), MoneyN, encodeSmallMoney, decodeSmallmoney, func(f *colFmt) driver.ValueConverter {
+	smallmoneyType: {isConcrete, "smallmoney", 4, reflect.TypeOf(Num{}), moneyNType, encodeSmallMoney, decodeSmallmoney, func(f *colFmt) driver.ValueConverter {
 		return &numConverter{precision: 10, scale: 4}
 	}},
-	MoneyN: {isNullable, "money", 0, reflect.TypeOf(Num{}), MoneyN, encodeMoney, decodeMoney, func(f *colFmt) driver.ValueConverter {
+	moneyNType: {isNullable, "money", 0, reflect.TypeOf(Num{}), moneyNType, encodeMoney, decodeMoney, func(f *colFmt) driver.ValueConverter {
 		return &numConverter{precision: 20, scale: 4}
 	}},
-	Text:         {isConcrete | hasLength | isNullable | isLong | isLob, "text", 0, reflect.TypeOf(""), Text, encodeText, decodeText, charFct},
-	Image:        {isConcrete | hasLength | isNullable | isLong | isLob, "image", 0, reflect.TypeOf([]byte{}), Image, encodeImage, decodeImage, byteFct},
-	ExtendedType: {hasLength | isNullable | isLong, "long", 0, nil, ExtendedType, nil, nil, byteFct},
-	LongBinary:   {hasLength | isNullable | isLong, "binary", 0, reflect.TypeOf([]byte{}), LongBinary, encodeLongbinary, decodeBinary, byteFct},
-	Unitext:      {isConcrete | hasLength | isNullable | isLong | isLob, "unitext", 0, reflect.TypeOf(""), LongBinary, encodeUnitext, decodeUnitext, charFct},
-	Unichar:      {isConcrete | hasLength | isNullable | isLong, "unichar", 0, reflect.TypeOf(""), LongBinary, encodeUniChar, decodeUniChar, charFct},
-	Univarchar:   {isConcrete | hasLength | isNullable | isLong, "unichar", 0, reflect.TypeOf(""), LongBinary, encodeUniChar, decodeUniChar, charFct},
-	LongChar:     {hasLength | isNullable | isLong | isConcrete, "varchar", 0, reflect.TypeOf(""), LongChar, encodeLongchar, decodeChar, charFct},
-	Varbinary:    {isConcrete | hasLength | isNullable | isConcrete, "varbinary", 0, reflect.TypeOf([]byte{}), Varbinary, encodeBinary, decodeBinary, byteFct},
-	Varchar:      {isConcrete | hasLength | isNullable | isConcrete, "varchar", 0, reflect.TypeOf(""), Varchar, encodeChar, decodeChar, charFct}}
+	textType:       {isConcrete | hasLength | isNullable | isLong | isLob, "text", 0, reflect.TypeOf(""), textType, encodeText, decodeText, charFct},
+	imageType:      {isConcrete | hasLength | isNullable | isLong | isLob, "image", 0, reflect.TypeOf([]byte{}), imageType, encodeImage, decodeImage, byteFct},
+	extendedType:   {hasLength | isNullable | isLong, "long", 0, nil, extendedType, nil, nil, byteFct},
+	longBinaryType: {hasLength | isNullable | isLong, "binary", 0, reflect.TypeOf([]byte{}), longBinaryType, encodeLongbinary, decodeBinary, byteFct},
+	unitextType:    {isConcrete | hasLength | isNullable | isLong | isLob, "unitext", 0, reflect.TypeOf(""), longBinaryType, encodeUnitext, decodeUnitext, charFct},
+	unicharType:    {isConcrete | hasLength | isNullable | isLong, "unichar", 0, reflect.TypeOf(""), longBinaryType, encodeUniChar, decodeUniChar, charFct},
+	univarcharType: {isConcrete | hasLength | isNullable | isLong, "unichar", 0, reflect.TypeOf(""), longBinaryType, encodeUniChar, decodeUniChar, charFct},
+	longCharType:   {hasLength | isNullable | isLong | isConcrete, "varchar", 0, reflect.TypeOf(""), longCharType, encodeLongchar, decodeChar, charFct},
+	varbinaryType:  {isConcrete | hasLength | isNullable | isConcrete, "varbinary", 0, reflect.TypeOf([]byte{}), varbinaryType, encodeBinary, decodeBinary, byteFct},
+	varcharType:    {isConcrete | hasLength | isNullable | isConcrete, "varchar", 0, reflect.TypeOf(""), varcharType, encodeChar, decodeChar, charFct}}
 
 //
 // data binary.Encoders/decoders
@@ -272,14 +272,14 @@ func decodeDateTime(e *binary.Encoder, i colType) (interface{}, error) {
 
 	realType := i.dataType
 
-	if i.dataType == DatetimeN {
+	if i.dataType == datetimeNType {
 		switch i.bufferSize {
 		default:
 			return nil, fmt.Errorf("tds: invalid length (%d) for datatype %#x", i.bufferSize, i.dataType)
 		case 4:
-			realType = Smalldatetime
+			realType = smalldatetimeType
 		case 8:
-			realType = Datetime
+			realType = datetimeType
 		}
 	}
 
@@ -287,25 +287,25 @@ func decodeDateTime(e *binary.Encoder, i colType) (interface{}, error) {
 	default:
 		return nil, fmt.Errorf("tds: unexpected data type: %s", realType)
 	// datetime, julian day from sybase epoch and number of milliseconds since midnight
-	case Datetime:
+	case datetimeType:
 		julianDay = int(e.Int32())
 		ms = int(e.Int32()) * 1000 / 300
 	// date, julian day from sybase epoch and number 300ms since midnight
-	case Date, DateN:
+	case dateType, dateNType:
 		julianDay = int(e.Int32())
 	// time, number 300ms since midnight
-	case Time:
+	case timeType:
 		ms = int(e.Int32()) * 1000 / 300
 	// smalldatetime, julian day from sybase epoch and number of minutes since midnight
-	case Smalldatetime:
+	case smalldatetimeType:
 		julianDay = int(e.Int16()) & 0xFFFF
 		min = int(e.Int16())
 	// BigTime, seconds since midnight and decimacroseconds
-	case Bigtime, BigtimeN:
+	case bigtimeType, bigtimeNType:
 		bigTime := e.Uint64()
 		ns = int(bigTime%1000000) * 1000
 		s = int(bigTime/1000000) % 86400
-	case Bigdatetime, BigdatetimeN:
+	case bigdatetimeType, bigdatetimeNType:
 		bigTime := e.Uint64()
 		ns = int(bigTime%1000000) * 1000
 		s = int(bigTime/1000000) % 86400
@@ -364,22 +364,22 @@ func encodeDateTime(e *binary.Encoder, s interface{}, i colType) (err error) {
 	switch i.dataType {
 	default:
 		return fmt.Errorf("tds: unexpected data type: %s", i.dataType)
-	case Datetime, DatetimeN:
+	case datetimeType, datetimeNType:
 		e.WriteInt32(int32(julianDay))
 		e.WriteInt32(int32(val.Hour()*1080000 + val.Minute()*18000 +
 			val.Second()*300 + val.Nanosecond()/1000000))
-	case Date, DateN:
+	case dateType, dateNType:
 		e.WriteInt32(int32(julianDay))
-	case Time, TimeN:
+	case timeType, timeNType:
 		e.WriteInt32(int32(val.Hour()*1080000 + val.Minute()*18000 +
 			val.Second()*300 + val.Nanosecond()/1000000))
-	case Smalldatetime:
+	case smalldatetimeType:
 		e.WriteInt16(int16(julianDay))
 		e.WriteInt16(int16(val.Hour()*60 + val.Minute()))
-	case Bigtime, BigtimeN:
+	case bigtimeType, bigtimeNType:
 		e.WriteUint64(uint64((val.Hour()*3600+val.Minute()*60+val.Second()))*1000000 +
 			uint64(val.Nanosecond())/1000)
-	case Bigdatetime, BigdatetimeN:
+	case bigdatetimeType, bigdatetimeNType:
 		e.WriteUint64(uint64(julianDay+693961)*86400*1000000 +
 			uint64((val.Hour()*3600+val.Minute()*60+val.Second()))*1000000 + uint64(val.Nanosecond())/1000)
 	}
