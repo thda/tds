@@ -401,7 +401,6 @@ func (b *buf) send(ctx context.Context, pt packetType, msgs ...messageReaderWrit
 // netlib session state
 type state struct {
 	t       token                   // last token read
-	prev    token                   // previous token
 	handler func(t token) error     // message handler to run after read
 	msg     map[token]messageReader // messages to read into
 	err     error                   // error faced during read
@@ -414,9 +413,6 @@ type stateFn func(*state) stateFn
 // receive reads messages and updates the state accordingly.
 // returns a state function to process next message.
 func (b *buf) receive(s *state) stateFn {
-	defer func() {
-		s.prev = s.t
-	}()
 	// create a context with a Timeout of ReadTimeout if no particular context given
 	if s.ctx == nil && b.ReadTimeout > 0 {
 		var cancelFunc func()
