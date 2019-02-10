@@ -352,5 +352,7 @@ input:
 
 		tblfmt.EncodeAll(w, rows, map[string]string{"format": "aligned", "border": "2",
 			"unicode_border_linestyle": "single", "linestyle": "unicode"})
+
+		rows.Close()
 	}
 }

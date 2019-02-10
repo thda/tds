@@ -423,16 +423,10 @@ func (s *session) Ping(ctx context.Context) error {
 		return driver.ErrBadConn
 	}
 
-	value, err := s.SelectValue(ctx, "select 1")
+	_, err := s.SelectValue(ctx, "")
 	if err != nil {
 		return err
 	}
-
-	intVal, ok := value.(int64)
-	if !ok || intVal != 1 {
-		return errors.New("sql: ping command failed. Invalid data returned")
-	}
-
 	return nil
 }
 
