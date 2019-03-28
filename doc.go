@@ -130,7 +130,10 @@ ask the server to convert back and forth to/from this charset.
 
 If utf8 charset conversion is not supported on the server, and if the
 charset conversion is not supported by golang.org/x/text/encoding,
-client-side character set conversion will not be possible.
+you can add client-side character set conversion with the following code:
+
+	var e encoding.Encoding
+	tds.RegisterEncoding("name", e)
 
 You will have to handle it yourself and use a charset supported by the server.
 

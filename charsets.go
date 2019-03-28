@@ -2,6 +2,7 @@ package tds
 
 import (
 	"fmt"
+	"sync"
 
 	"golang.org/x/net/html/charset"
 	"golang.org/x/text/encoding"
@@ -55,6 +56,7 @@ var nameMap = map[string]string{
 }
 
 var nameToCharset = map[string]encoding.Encoding{}
+var nameToCharsetMutex sync.RWMutex
 
 // fetch the encodings from html aliases and iana index
 func init() {
@@ -71,8 +73,17 @@ func init() {
 }
 
 func getEncoding(sybName string) (encoding.Encoding, error) {
+	nameToCharsetMutex.RLock()
+	defer nameToCharsetMutex.RUnlock()
 	if e, found := nameToCharset[sybName]; found {
 		return e, nil
 	}
 	return nil, fmt.Errorf("netlib: unsupported charset: %s", sybName)
+}
+
+// RegisterEncoding register encoding for the charset
+func RegisterEncoding(sybaseCharsetName string, e encoding.Encoding) {
+	nameToCharsetMutex.Lock()
+	defer nameToCharsetMutex.Unlock()
+	nameToCharset[sybaseCharsetName] = e
 }
