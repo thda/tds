@@ -394,10 +394,11 @@ func (s *session) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx
 		}
 
 		for f := s.initState(ctx, map[token]messageReader{}); f != nil; f = f(s.state) {
-			if s.state.err = s.checkErr(s.state.err, "tds: isolation level set failed", true); s.state.err != nil {
-				s.valid = false
-				return s, s.state.err
-			}
+		}
+
+		if s.state.err = s.checkErr(s.state.err, "tds: isolation level set failed", true); s.state.err != nil {
+			s.valid = false
+			return s, s.state.err
 		}
 	}
 	_, err := s.simpleExec(ctx, `begin tran
@@ -546,6 +547,7 @@ func newState(ctx context.Context, msg map[token]messageReader,
 func (s *session) initState(ctx context.Context,
 	messages map[token]messageReader) stateFn {
 	s.state.ctx, s.state.msg = ctx, messages
+	s.state.err = nil
 	return s.b.receive(s.state)
 }
 

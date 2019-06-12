@@ -1253,3 +1253,43 @@ func TestContext(t *testing.T) {
 		return
 	}
 }
+
+func TestErrorHandler(t *testing.T) {
+	conn := getConn(t)
+	if conn == nil {
+		t.Fatal("connect failed")
+	}
+
+	var procText string
+
+	// print showplan messages and all
+	conn.SetErrorhandler(func(m SybError) bool {
+		if m.Severity == 10 {
+			if (m.MsgNumber >= 3612 && m.MsgNumber <= 3615) ||
+				(m.MsgNumber >= 6201 && m.MsgNumber <= 6299) ||
+				(m.MsgNumber >= 10201 && m.MsgNumber <= 10299) {
+				procText += m.Message
+			} else {
+				procText += strings.TrimRight(m.Message, "\n") + "\n"
+			}
+		}
+
+		if m.Severity > 10 {
+			procText += m.Message
+		}
+		return m.Severity > 10
+	})
+
+	defer conn.Close()
+	_, err := conn.ExecContext(context.Background(), "exec sybsystemprocs..sp_showtext 'sp_who'", nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if procText == "" {
+		t.Error("Expected stored procedure text, got nothing")
+	}
+
+	// close actual connection to make commit transaction to fail during sending of a packet
+	conn.c.Close()
+}

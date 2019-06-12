@@ -54,6 +54,7 @@ func newStmt(ctx context.Context, s *session, query string) (*Stmt, error) {
 
 	// send query
 	err := s.b.send(ctx, normalPacket, st.d)
+
 	if err = s.checkErr(err, "tds: Prepare failed", false); err != nil {
 		return st, err
 	}
@@ -66,9 +67,10 @@ func newStmt(ctx context.Context, s *session, query string) (*Stmt, error) {
 	for f := s.initState(ctx,
 		map[token]messageReader{dynamic2Token: st.d,
 			paramFmtToken: params, paramFmt2Toekn: wideParams}); f != nil; f = f(s.state) {
-		if s.state.err = s.checkErr(err, "tds: Prepare failed", true); err != nil {
-			return st, s.state.err
-		}
+	}
+
+	if err := s.checkErr(s.state.err, "tds: Prepare failed", true); err != nil {
+		return st, err
 	}
 
 	// assign the expected parameters' values
@@ -217,10 +219,12 @@ func (st *Stmt) Close() error {
 	// get response
 	// TODO: parse dynamic token to get status
 	for f := st.s.initState(nil, nil); f != nil; f = f(st.s.state) {
-		if err := st.s.checkErr(st.s.state.err, "tds: close failed", true); err != nil {
-			return err
-		}
 	}
+
+	if err := st.s.checkErr(st.s.state.err, "tds: close failed", true); err != nil {
+		return err
+	}
+
 	return nil
 }
 
