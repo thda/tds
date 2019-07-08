@@ -207,7 +207,7 @@ loginResponse:
 	}
 
 	if s.state.err != nil && s.state.err != io.EOF {
-		return err
+		return s.state.err
 	}
 
 	// RSA encryption supported, extract the public key
