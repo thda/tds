@@ -144,7 +144,7 @@ func TestBadConnect(t *testing.T) {
 	}
 	defer db.Close()
 	err = db.Ping()
-	if err == nil || (strings.Index(err.Error(), "4002") == -1 && strings.Index(err.Error(), "Login failed") == -1) {
+	if err == nil || err.(SybError).MsgNumber != 4002 {
 		t.Error("ping should fail with a sybase login error")
 	}
 }
