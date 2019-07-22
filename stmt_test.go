@@ -1290,6 +1290,5 @@ func TestErrorHandler(t *testing.T) {
 		t.Error("Expected stored procedure text, got nothing")
 	}
 
-	// close actual connection to make commit transaction to fail during sending of a packet
 	conn.c.Close()
 }
