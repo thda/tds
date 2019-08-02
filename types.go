@@ -211,7 +211,7 @@ var typeAttributes = map[dataType]typeAttribute{
 	datetimeNType:     {hasLength | isNullable, "datetime", 8, reflect.TypeOf(time.Time{}), datetimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return dateTimeConv }},
 	dateNType:         {hasLength | isNullable, "datetime", 4, reflect.TypeOf(time.Time{}), datetimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return dateConv }},
 	bigdatetimeType:   {hasLength | hasPrec | isConcrete, "bigdatetime", 8, reflect.TypeOf(time.Time{}), bigdatetimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return bigDateTimeConv }},
-	bigdatetimeNType:  {hasLength | hasPrec | isNullable, "bigdatetime", 8, reflect.TypeOf(time.Time{}), bigdatetimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return bigDateTimeConv }},
+	bigdatetimeNType:  {hasLength | hasPrec | isConcrete | isNullable, "bigdatetime", 8, reflect.TypeOf(time.Time{}), bigdatetimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return bigDateTimeConv }},
 	bigtimeType:       {hasLength | hasPrec | isConcrete, "bigtime", 8, reflect.TypeOf(time.Time{}), bigtimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return timeConv }},
 	bigtimeNType:      {hasLength | hasPrec | isNullable, "bigtime", 8, reflect.TypeOf(time.Time{}), bigtimeNType, encodeDateTime, decodeDateTime, func(*colFmt) driver.ValueConverter { return timeConv }},
 	decimalType: {isConcrete | hasLength | hasPrec | hasScale, "decimal", 0, reflect.TypeOf(Num{}), numericNType, encodeNumeric, decodeNumeric, func(f *colFmt) driver.ValueConverter {
