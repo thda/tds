@@ -551,7 +551,9 @@ func (b *buf) processCancel() (err error) {
 		if b.h.status&eom != 0 {
 			break
 		}
-		b.readPkt(true)
+		if err = b.readPkt(true); err != nil {
+			return fmt.Errorf("netlib: error while reading cancel packet: %s", err)
+		}
 	}
 
 	// the server has 2 ways to send cancel ack:
