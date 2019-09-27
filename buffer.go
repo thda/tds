@@ -543,6 +543,8 @@ func (b *buf) processCancel() (err error) {
 	// this will effectively block until cancel packet is sent
 	select {
 	case cancelErr = <-b.cancelCh:
+	case <-time.After(time.Duration(b.CancelTimeout) * time.Second):
+		return fmt.Errorf("netlib: timeout while processing cancel")
 	}
 
 	// read until last packet
