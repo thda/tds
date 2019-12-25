@@ -111,6 +111,9 @@ func TestConverters(t *testing.T) {
 	var num2 = Num{precision: 12, scale: 4}
 	num2.Scan("144")
 
+	var num3 = Num{precision: 15, scale: 2}
+	num3.Scan("-0.01")
+
 	testValues := []testValue{
 		// int
 		testValue{value: int64(3230), err: nil, columnDesc: "int not null", output: int64(3230)},
@@ -190,6 +193,7 @@ func TestConverters(t *testing.T) {
 		testValue{value: num1, err: nil, columnDesc: "numeric(12,4) not null", output: num1},
 		testValue{value: num1, err: ErrOverFlow, columnDesc: "numeric(10,4) not null", output: nil},
 		testValue{value: int64(144), err: nil, columnDesc: "numeric(12,4) not null", output: num2},
+		testValue{value: "-0.01", err: nil, columnDesc: "numeric(14,2) not null", output: num3},
 
 		// real
 		testValue{value: nil, err: errors.New("Msg: 515"), columnDesc: "real not null", output: nil},

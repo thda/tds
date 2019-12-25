@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/thda/tds/binary"
@@ -124,9 +125,24 @@ func (n Num) String() string {
 	if !mul.IsInt() {
 		return "incorrect rational"
 	}
-	b := []byte(mul.String())
-	// TODO: remove trailing zeros
-	return string(b[:len(b)-2-int(n.scale)]) + "." + string(b[len(b)-2-int(n.scale):len(b)-2])
+
+	// get the integer value, and sign
+	sign := mul.Sign()
+	str := strings.Split(mul.Abs(mul).String(), "/")[0]
+
+	// left pad with zeroes
+	cnt := int(n.scale) - len(str) + 1
+	if cnt < 0 {
+		cnt = 0
+	}
+	str = strings.Repeat("0", cnt) + str
+	if sign == -1 {
+		str = "-" + str
+	}
+
+	return strings.Trim(string(str[:len(str)-int(n.scale)])+
+		"."+string(str[len(str)-
+		int(n.scale):len(str)]), "0")
 }
 
 // Rat returns the underlying big.Rat value
