@@ -208,6 +208,8 @@ func TestConverters(t *testing.T) {
 		testValue{value: float64(1442.212), err: nil, columnDesc: "float not null", output: float64(1442.212)},
 
 		// bigint
+
+		testValue{value: "3230", err: nil, columnDesc: "bigint not null", output: int64(3230)},
 		testValue{value: int64(3230), err: nil, columnDesc: "bigint not null", output: int64(3230)},
 		testValue{value: uint64(math.MaxInt64 + 1), err: ErrOverFlow, columnDesc: "bigint not null", output: nil},
 		testValue{value: int64(math.MaxInt64), err: nil, columnDesc: "bigint not null", output: int64(math.MaxInt64)},
@@ -216,6 +218,7 @@ func TestConverters(t *testing.T) {
 		testValue{value: nil, err: errors.New("Msg: 515"), columnDesc: "bigint not null", output: nil},
 
 		// tinyint
+		testValue{value: "200", err: nil, columnDesc: "tinyint not null", output: int64(200)},
 		testValue{value: int64(200), err: nil, columnDesc: "tinyint not null", output: int64(200)},
 		testValue{value: int64(math.MaxUint8 + 1), err: ErrOverFlow, columnDesc: "tinyint not null", output: nil},
 		testValue{value: int64(math.MaxUint8), err: nil, columnDesc: "tinyint not null", output: int64(math.MaxUint8)},
@@ -224,6 +227,7 @@ func TestConverters(t *testing.T) {
 		testValue{value: nil, err: errors.New("Msg: 515"), columnDesc: "tinyint", output: nil},
 
 		// unsigned int
+		testValue{value: "3230", err: nil, columnDesc: "unsigned int not null", output: int64(3230)},
 		testValue{value: int64(3230), err: nil, columnDesc: "unsigned int not null", output: int64(3230)},
 		testValue{value: math.MaxUint32 + 1, err: ErrOverFlow, columnDesc: "unsigned int not null", output: nil},
 		testValue{value: -1, err: ErrOverFlow, columnDesc: "unsigned int not null", output: nil},
@@ -232,6 +236,7 @@ func TestConverters(t *testing.T) {
 		testValue{value: nil, err: errors.New("Msg: 515"), columnDesc: "unsigned int not null", output: nil},
 
 		// unsigned smallint
+		testValue{value: "3230", err: nil, columnDesc: "unsigned smallint not null", output: int64(3230)},
 		testValue{value: int64(3230), err: nil, columnDesc: "unsigned smallint not null", output: int64(3230)},
 		testValue{value: math.MaxUint16 + 1, err: ErrOverFlow, columnDesc: "unsigned smallint null", output: nil},
 		testValue{value: -1, err: ErrOverFlow, columnDesc: "unsigned smallint null", output: nil},
@@ -240,6 +245,7 @@ func TestConverters(t *testing.T) {
 		testValue{value: nil, err: errors.New("Msg: 515"), columnDesc: "unsigned smallint not null", output: nil},
 
 		// unsigned bigint
+		testValue{value: "3230", err: nil, columnDesc: "unsigned bigint not null", output: uint64(3230)},
 		testValue{value: uint64(3230), err: nil, columnDesc: "unsigned bigint not null", output: uint64(3230)},
 		testValue{value: -1, err: ErrOverFlow, columnDesc: "unsigned bigint not null", output: nil},
 		testValue{value: uint64(math.MaxUint64), err: nil, columnDesc: "unsigned bigint not null", output: uint64(math.MaxUint64)},
@@ -247,6 +253,7 @@ func TestConverters(t *testing.T) {
 		testValue{value: nil, err: errors.New("Msg: 515"), columnDesc: "unsigned bigint not null", output: nil},
 
 		// tinyint
+		testValue{value: "200", err: nil, columnDesc: "unsigned tinyint not null", output: int64(200)},
 		testValue{value: int64(200), err: nil, columnDesc: "unsigned tinyint not null", output: int64(200)},
 		testValue{value: int64(math.MaxUint8 + 1), err: ErrOverFlow, columnDesc: "unsigned tinyint not null", output: nil},
 		testValue{value: int64(math.MaxUint8), err: nil, columnDesc: "unsigned tinyint not null", output: int64(math.MaxUint8)},

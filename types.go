@@ -933,6 +933,12 @@ func (i intConverter) ConvertValue(src interface{}) (driver.Value, error) {
 			return nil, ErrOverFlow
 		}
 		return i64, nil
+	case reflect.String:
+		i, err := strconv.Atoi(rv.String())
+		if err != nil {
+			return nil, ErrBadType
+		}
+		return int64(i), nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		u64 = rv.Uint()
 	}
