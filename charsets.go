@@ -60,13 +60,12 @@ var nameToCharsetMutex sync.RWMutex
 
 // fetch the encodings from html aliases and iana index
 func init() {
-	var ianaidx ianaindex.Index
 	for sybName, goName := range nameMap {
 		if e, _ := charset.Lookup(goName); e != nil {
 			nameToCharset[sybName] = e
 			continue
 		}
-		if e, _ := ianaidx.Encoding(goName); e != nil {
+		if e, _ := ianaindex.IANA.Encoding(goName); e != nil {
 			nameToCharset[sybName] = e
 		}
 	}

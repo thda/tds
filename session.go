@@ -578,13 +578,13 @@ func (s *session) processEnvChange() (err error) {
 		switch s.envChange.newValue {
 		default:
 			if err = s.b.SetCharset(s.envChange.newValue); err != nil {
-				return fmt.Errorf("tds: cannot encode to '%s' charset", s.envChange.newValue)
+				return fmt.Errorf("tds: cannot encode to '%s' charset: %s", s.envChange.newValue, err)
 			}
 			s.charset = s.envChange.newValue
 			s.charConvert = true
 		case "":
 			if err = s.b.SetCharset(s.envChange.oldValue); err != nil {
-				return fmt.Errorf("tds: cannot encode to '%s' charset", s.envChange.oldValue)
+				return fmt.Errorf("tds: cannot encode to '%s' charset: %s", s.envChange.oldValue, err)
 			}
 			s.charset = s.envChange.oldValue
 			s.charConvert = true
