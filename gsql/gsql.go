@@ -47,6 +47,7 @@ var (
 	width           int
 	ssl             = "off"
 	theme           = "UtfCompact"
+	outFormat       = "table"
 	re              *regexp.Regexp
 )
 
@@ -82,6 +83,7 @@ func init() {
 	flag.StringVar(&userName, "U", "none", "user name")
 	flag.StringVar(&ssl, "x", ssl, "Set to 'on' to enable ssl")
 	flag.StringVar(&locale, "z", "none", "locale name")
+	flag.StringVar(&outFormat, "f", outFormat, "output format. Can be 'table','json', or 'csv'")
 	flag.Parse()
 
 	re = regexp.MustCompile("(" + terminator + ")\n")
@@ -156,7 +158,6 @@ func (r *fileBatchReader) ReadBatch(terminator string) (batch string, err error)
 		// found the separator
 		if found {
 			lineNo = 1
-			fmt.Println(batch)
 			return batch, nil
 		}
 
@@ -295,7 +296,7 @@ func main() {
 
 	case "/gsqlnone/":
 		w = bufio.NewWriter(os.Stdout)
-
+		defer w.Flush()
 	}
 
 	// open input
@@ -354,9 +355,13 @@ input:
 			continue input
 		}
 
-		tblfmt.EncodeAll(w, rows, map[string]string{"format": "aligned", "border": "2",
-			"unicode_border_linestyle": "single", "linestyle": "unicode"})
-
+		switch outFormat {
+		case "json":
+			tblfmt.EncodeJSONAll(w, rows)
+		default:
+			tblfmt.EncodeAll(w, rows, map[string]string{"format": "aligned", "border": "2",
+				"unicode_border_linestyle": "single", "linestyle": "unicode"})
+		}
 		rows.Close()
 	}
 }
