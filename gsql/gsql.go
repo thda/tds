@@ -84,7 +84,7 @@ func init() {
 	flag.StringVar(&locale, "z", "none", "locale name")
 	flag.Parse()
 
-	re = regexp.MustCompile("(" + terminator + ")$")
+	re = regexp.MustCompile("(" + terminator + ")\n")
 
 	// check for mandatory parameters
 	if userName == "" || server == "" {
@@ -119,7 +119,7 @@ func buildCnxStr() string {
 // find the string terminator in a line and add it to the current batch if needed
 func processLine(terminator string, line string, batch string) (batchOut string, found bool) {
 	// continue till we get a the terminator
-	if match, _ := regexp.MatchString(terminator+"$", line); !match {
+	if match := re.MatchString(line); !match {
 		if batch == "" {
 			batchOut = line
 		} else {
@@ -156,6 +156,7 @@ func (r *fileBatchReader) ReadBatch(terminator string) (batch string, err error)
 		// found the separator
 		if found {
 			lineNo = 1
+			fmt.Println(batch)
 			return batch, nil
 		}
 
@@ -169,7 +170,9 @@ func (r *fileBatchReader) ReadBatch(terminator string) (batch string, err error)
 // get an instance of readline with the proper settings
 func newFileBatchReader(inputFile string, w *bufio.Writer) (r *fileBatchReader, err error) {
 	r = &fileBatchReader{w: w}
-	if r.ReadCloser, err = os.Open(inputFile); err != nil {
+	if inputFile == "-" {
+		r.ReadCloser = os.Stdin
+	} else if r.ReadCloser, err = os.Open(inputFile); err != nil {
 		return nil, err
 	}
 	r.scanner = bufio.NewReader(r.ReadCloser)
@@ -300,6 +303,7 @@ func main() {
 	case "/gsqlnone/":
 		// get readline instance
 		r, err = newReadLineBatchReader(conn)
+
 	default:
 		r, err = newFileBatchReader(inputFile, w)
 	}

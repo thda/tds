@@ -1093,6 +1093,7 @@ func TestColumnTypeIntrospection(t *testing.T) {
 		{"cast(getdate() as time)", "time", reflect.TypeOf(time.Time{}), false, 0, false, 0, 0},
 		{"cast('abc' as varchar(200))", "varchar", reflect.TypeOf(""), true, 200, false, 0, 0},
 		{"'abc'", "varchar", reflect.TypeOf(""), true, 3, false, 0, 0},
+		{"'1'", "varchar", reflect.TypeOf(""), true, 1, false, 0, 0},
 		{"cast(1 as decimal)", "decimal", reflect.TypeOf(Num{}), false, 0, true, 18, 0},
 		{"cast(1 as decimal(5, 2))", "decimal", reflect.TypeOf(Num{}), false, 0, true, 5, 2},
 		{"cast(1 as numeric(10, 4))", "numeric", reflect.TypeOf(Num{}), false, 0, true, 10, 4},
