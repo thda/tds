@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -30,7 +31,7 @@ var (
 	printVersion    = false
 	chained         = false
 	packetSize      = 512
-	terminator      = ""
+	terminator      = ";|^go"
 	database        = "master"
 	hostname        string
 	inputFile       string
@@ -86,7 +87,7 @@ func init() {
 	flag.StringVar(&outFormat, "f", outFormat, "output format. Can be 'table','json', or 'csv'")
 	flag.Parse()
 
-	re = regexp.MustCompile("(" + terminator + ")\n")
+	re = regexp.MustCompile("(" + terminator + ")\n?$")
 
 	// check for mandatory parameters
 	if userName == "" || server == "" {
@@ -155,16 +156,17 @@ func (r *fileBatchReader) ReadBatch(terminator string) (batch string, err error)
 		}
 		batch, found = processLine(terminator, line, batch)
 
+		if echoInput {
+			fmt.Printf("%d> %s", lineNo, line)
+		}
+		lineNo++
+
 		// found the separator
 		if found {
 			lineNo = 1
 			return batch, nil
 		}
 
-		if echoInput {
-			fmt.Printf("%d> %s", lineNo, line)
-		}
-		lineNo++
 	}
 }
 
@@ -241,11 +243,26 @@ func newReadLineBatchReader(conn *sql.DB) (SQLBatchReader, error) {
 	return &readLineBatchReader{Instance: rl, conn: conn}, err
 }
 
+// Result is the struct to json encode
+type Result struct {
+	Messages     string
+	Results      json.RawMessage
+	Duration     uint64
+	Error        string
+	ReturnStatus int
+}
+
 func main() {
 	// defer profile.Start(profile.CPUProfile).Stop()
 	var batch string
 	var r SQLBatchReader
 	var w *bufio.Writer
+	var mb strings.Builder // message buffer
+
+	mo := bufio.NewWriter(os.Stdout)
+	if outFormat == "json" {
+		mo = bufio.NewWriter(&mb)
+	}
 
 	// connect
 	conn, err := sql.Open("tds", buildCnxStr())
@@ -260,14 +277,14 @@ func main() {
 			if (m.MsgNumber >= 3612 && m.MsgNumber <= 3615) ||
 				(m.MsgNumber >= 6201 && m.MsgNumber <= 6299) ||
 				(m.MsgNumber >= 10201 && m.MsgNumber <= 10299) {
-				fmt.Printf(m.Message)
+				mo.WriteString(m.Message)
 			} else {
-				fmt.Println(strings.TrimRight(m.Message, "\n"))
+				mo.WriteString(strings.TrimRight(m.Message, "\n"))
 			}
 		}
 
 		if m.Severity > 10 {
-			fmt.Print(m)
+			mo.WriteString(m.Error())
 		}
 		return m.Severity > 10
 	})
@@ -347,18 +364,32 @@ input:
 		case done <- struct{}{}:
 		}
 
-		if err != nil {
-			// SQL errors are printed by the error handler
-			if _, ok := err.(tds.SybError); !ok {
-				fmt.Println(err)
-			}
-			continue input
-		}
-
 		switch outFormat {
 		case "json":
-			tblfmt.EncodeJSONAll(w, rows)
+			if err != nil {
+				out, _ := json.Marshal(&Result{
+					Messages: mb.String(), ReturnStatus: 1, Error: err.Error()})
+				fmt.Println(string(out))
+				continue input
+			}
+			for {
+				rb := strings.Builder{}
+				tblfmt.EncodeJSON(&rb, rows)
+				out, _ := json.Marshal(&Result{Results: json.RawMessage(rb.String()),
+					Messages: mb.String()})
+				fmt.Println(string(out))
+				if !rows.NextResultSet() {
+					continue input
+				}
+			}
 		default:
+			if err != nil {
+				// SQL errors are printed by the error handler
+				if _, ok := err.(tds.SybError); !ok {
+					fmt.Println(err)
+				}
+				continue input
+			}
 			tblfmt.EncodeAll(w, rows, map[string]string{"format": "aligned", "border": "2",
 				"unicode_border_linestyle": "single", "linestyle": "unicode"})
 		}

@@ -710,11 +710,23 @@ func TestQueryNoRows(t *testing.T) {
 
 	var rows *sql.Rows
 	var err error
-	if rows, err = conn.Query("create table #abc (fld int)"); err != nil {
+	if rows, err = conn.Query("create table #abc (fld int, fld3 char(3) null)"); err != nil {
 		t.Fatal("Query failed", err)
 	}
 	if rows.Next() {
 		t.Fatal("Query shoulnd't return any rows")
+	}
+	if rows, err = conn.Query("insert into #abc values (?,?)", 1, "tes"); err != nil {
+		t.Fatal("Query failed", err)
+	}
+	if rows.Next() {
+		t.Fatal("Query shoulnd't return any rows")
+	}
+	if rows, err = conn.Query("select * from #abc where fld = ?", 1); err != nil {
+		t.Fatal("Query failed", err)
+	}
+	if !rows.Next() {
+		t.Fatal("Query should return rows")
 	}
 }
 

@@ -56,6 +56,8 @@ func buildurl() string {
 		v.Set("packetSize", fmt.Sprintf("%d", testPacketSize))
 	}
 
+	v.Set("encryptPassword", "yes")
+
 	v.Set("hostname", testHostname)
 	if testCharset != "" {
 		v.Set("charset", testCharset)
