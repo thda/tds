@@ -369,7 +369,7 @@ input:
 			if err != nil {
 				out, _ := json.Marshal(&Result{
 					Messages: mb.String(), ReturnStatus: 1, Error: err.Error()})
-				fmt.Println(string(out))
+				fmt.Sprintln(w, string(out))
 				continue input
 			}
 			for {
@@ -377,7 +377,7 @@ input:
 				tblfmt.EncodeJSON(&rb, rows)
 				out, _ := json.Marshal(&Result{Results: json.RawMessage(rb.String()),
 					Messages: mb.String()})
-				fmt.Println(string(out))
+				fmt.Sprintln(w, string(out))
 				if !rows.NextResultSet() {
 					continue input
 				}
