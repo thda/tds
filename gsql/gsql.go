@@ -310,6 +310,7 @@ func main() {
 
 		defer f.Close()
 		w = bufio.NewWriter(f)
+		defer w.Flush()
 
 	case "/gsqlnone/":
 		w = bufio.NewWriter(os.Stdout)
