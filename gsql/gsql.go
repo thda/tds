@@ -145,6 +145,18 @@ type fileBatchReader struct {
 	w       *bufio.Writer
 }
 
+// get an instance of readline with the proper settings
+func newFileBatchReader(inputFile string, w *bufio.Writer) (r *fileBatchReader, err error) {
+	r = &fileBatchReader{w: w}
+	if inputFile == "-" {
+		r.ReadCloser = os.Stdin
+	} else if r.ReadCloser, err = os.Open(inputFile); err != nil {
+		return nil, err
+	}
+	r.scanner = bufio.NewReader(r.ReadCloser)
+	return r, nil
+}
+
 func (r *fileBatchReader) ReadBatch(terminator string) (batch string, err error) {
 	found := false
 	lineNo := 1
@@ -157,7 +169,7 @@ func (r *fileBatchReader) ReadBatch(terminator string) (batch string, err error)
 		batch, found = processLine(terminator, line, batch)
 
 		if echoInput {
-			fmt.Printf("%d> %s", lineNo, line)
+			fmt.Fprintf(r.w, "%d> %s", lineNo, line)
 		}
 		lineNo++
 
@@ -168,18 +180,6 @@ func (r *fileBatchReader) ReadBatch(terminator string) (batch string, err error)
 		}
 
 	}
-}
-
-// get an instance of readline with the proper settings
-func newFileBatchReader(inputFile string, w *bufio.Writer) (r *fileBatchReader, err error) {
-	r = &fileBatchReader{w: w}
-	if inputFile == "-" {
-		r.ReadCloser = os.Stdin
-	} else if r.ReadCloser, err = os.Open(inputFile); err != nil {
-		return nil, err
-	}
-	r.scanner = bufio.NewReader(r.ReadCloser)
-	return r, nil
 }
 
 type readLineBatchReader struct {
@@ -300,7 +300,7 @@ func main() {
 		} else {
 			// truncate the file if it exists
 			if err = os.Truncate(outputFile, 0); err == nil {
-				f, err = os.Open(outputFile)
+				f, err = os.OpenFile(outputFile, os.O_WRONLY, os.ModePerm)
 			}
 		}
 		if err != nil {
@@ -369,7 +369,7 @@ input:
 			if err != nil {
 				out, _ := json.Marshal(&Result{
 					Messages: mb.String(), ReturnStatus: 1, Error: err.Error()})
-				fmt.Sprintln(w, string(out))
+				fmt.Fprintln(w, string(out))
 				continue input
 			}
 			for {
@@ -377,7 +377,7 @@ input:
 				tblfmt.EncodeJSON(&rb, rows)
 				out, _ := json.Marshal(&Result{Results: json.RawMessage(rb.String()),
 					Messages: mb.String()})
-				fmt.Sprintln(w, string(out))
+				fmt.Fprintln(w, string(out))
 				if !rows.NextResultSet() {
 					continue input
 				}
