@@ -361,6 +361,7 @@ input:
 
 		// send query
 		rows, err := conn.QueryContext(ctx, batch)
+		// flush message buffer
 		mo.Flush()
 		select {
 		case <-done:
@@ -378,7 +379,11 @@ input:
 			for {
 				rb := strings.Builder{}
 				tblfmt.EncodeJSON(&rb, rows)
-				out, _ := json.Marshal(&Result{Results: json.RawMessage(rb.String()),
+				results := rb.String()
+				if results == "" {
+					results = "{}"
+				}
+				out, _ := json.Marshal(&Result{Results: json.RawMessage(results),
 					Messages: mb.String()})
 				fmt.Fprintln(w, string(out))
 				if !rows.NextResultSet() {
