@@ -246,11 +246,11 @@ func newReadLineBatchReader(conn *sql.DB) (SQLBatchReader, error) {
 
 // Result is the struct to json encode
 type Result struct {
-	Messages     string
-	Results      json.RawMessage
-	Duration     uint64
-	Error        string
-	ReturnStatus int
+	Messages     string          `json:"messages"`
+	Results      json.RawMessage `json:"results"`
+	Duration     uint64          `json:"duration"`
+	Error        string          `json:"error"`
+	ReturnStatus int             `json:"return_status"`
 }
 
 func main() {
