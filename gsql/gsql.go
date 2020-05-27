@@ -381,15 +381,16 @@ input:
 				rb := strings.Builder{}
 				tblfmt.EncodeJSON(&rb, rows)
 				results := rb.String()
-				if results == "" && mb.String() == "" {
-					continue input
-				}
 				if results == "" {
 					results = "{}"
 				}
-				out, _ := json.Marshal(&Result{Results: json.RawMessage(results),
-					Messages: mb.String()})
-				fmt.Fprintln(w, string(out))
+
+				if !(results == "" && mb.String() == "") {
+					out, _ := json.Marshal(&Result{Results: json.RawMessage(results),
+						Messages: mb.String()})
+					fmt.Fprintln(w, string(out))
+				}
+
 				mb = strings.Builder{}
 				if !rows.NextResultSet() {
 					continue input
