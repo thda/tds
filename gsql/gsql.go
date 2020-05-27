@@ -1,4 +1,5 @@
 // test package
+// not for production use
 package main
 
 import (
@@ -360,6 +361,7 @@ input:
 
 		// send query
 		rows, err := conn.QueryContext(ctx, batch)
+		mo.Flush()
 		select {
 		case <-done:
 		case done <- struct{}{}:
