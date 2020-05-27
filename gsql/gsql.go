@@ -385,7 +385,7 @@ input:
 					results = "{}"
 				}
 
-				if !(results == "" && mb.String() == "") {
+				if !(results == "{}" && mb.String() == "") {
 					out, _ := json.Marshal(&Result{Results: json.RawMessage(results),
 						Messages: mb.String()})
 					fmt.Fprintln(w, string(out))
