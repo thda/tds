@@ -374,6 +374,7 @@ input:
 				out, _ := json.Marshal(&Result{
 					Messages: mb.String(), ReturnStatus: 1, Error: err.Error()})
 				fmt.Fprintln(w, string(out))
+				mb = strings.Builder{}
 				continue input
 			}
 			for {
@@ -387,6 +388,7 @@ input:
 					Messages: mb.String()})
 				fmt.Fprintln(w, string(out))
 				if !rows.NextResultSet() {
+					mb = strings.Builder{}
 					continue input
 				}
 			}
