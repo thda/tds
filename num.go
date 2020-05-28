@@ -28,10 +28,10 @@ type Num struct {
 
 // initialise all the possible exponents for numeric datatypes
 // Will be mainly used to check for overflow.
-var decimalPowers [38]*big.Int
+var decimalPowers [41]*big.Int
 
 func init() {
-	for i := int64(0); i < 38; i++ {
+	for i := int64(0); i <= 40; i++ {
 		decimalPowers[i] = new(big.Int).Exp(big.NewInt(10), big.NewInt(i), nil)
 	}
 }
@@ -142,7 +142,7 @@ func (n Num) String() string {
 
 	return strings.Trim(string(str[:len(str)-int(n.scale)])+
 		"."+string(str[len(str)-
-		int(n.scale):len(str)]), "0")
+		int(n.scale):]), "0")
 }
 
 // Rat returns the underlying big.Rat value
@@ -269,6 +269,11 @@ func decodeNumeric(e *binary.Encoder, i colType) (interface{}, error) {
 	// read all the bytes
 	bytes := make([]byte, i.bufferSize-1)
 	e.Read(bytes)
+
+	// safety check
+	if int(i.scale) > len(decimalPowers)-1 {
+		return nil, ErrOverFlow
+	}
 
 	// cast as a big.Rat
 	out := new(big.Rat).SetFrac(new(big.Int).SetBytes(bytes), decimalPowers[i.scale])
