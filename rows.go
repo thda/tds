@@ -55,7 +55,7 @@ var rowPool = sync.Pool{
 			columnFmtToken:     rows.columns,
 			// params are handled like rows
 			paramToken:      rows.row,
-			paramFmt2Toekn:  rows.wideParams,
+			paramFmt2Token:  rows.wideParams,
 			paramFmtToken:   rows.params,
 			columnInfoToken: rows.columnsInfo,
 			tableNameToken:  rows.tableName,
@@ -196,14 +196,14 @@ func (r *Rows) Next(dest []driver.Value) (err error) {
 			return nil
 		case tableNameToken, columnInfoToken, doneToken:
 			return r.Next(dest)
-		case wideColumnFmtToken, columnFmtToken, paramFmtToken, paramFmt2Toekn:
+		case wideColumnFmtToken, columnFmtToken, paramFmtToken, paramFmt2Token:
 			switch t {
 			case wideColumnFmtToken:
 				r.row.columns = r.wideColumns.fmts
 			case columnFmtToken:
 				r.row.columns = r.columns.fmts
 			// ignore parameters
-			case paramFmt2Toekn:
+			case paramFmt2Token:
 				r.row.columns = r.wideParams.fmts
 				return r.Next(dest)
 			case paramFmtToken:

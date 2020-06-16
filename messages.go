@@ -39,7 +39,7 @@ const (
 	noneToken          token = 0x00
 	capabilityReqToken token = 0x01
 	capabilityResToken token = 0x02
-	paramFmt2Toekn     token = 0x20 // 32
+	paramFmt2Token     token = 0x20 // 32
 	languageToken      token = 0x21 // 33
 	orderBy2Token      token = 0x22 // 34
 	wideColumnFmtToken token = 0x61 // 97
@@ -98,7 +98,7 @@ var msgs = map[token]msg{
 	noneToken:          {noneToken, noFlag, 0},
 	capabilityReqToken: {capabilityReqToken, noFlag, 0},
 	capabilityResToken: {capabilityResToken, noFlag, 0},
-	paramFmt2Toekn:     {paramFmt2Toekn, long, 0},
+	paramFmt2Token:     {paramFmt2Token, long, 0},
 	languageToken:      {languageToken, ignoreSize, 0},
 	orderBy2Token:      {orderBy2Token, long, 0},
 	cmpRowFmtToken:     {cmpRowFmtToken, noFlag, 0},

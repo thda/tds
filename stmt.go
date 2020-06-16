@@ -42,7 +42,7 @@ func newStmt(ctx context.Context, s *session, query string) (*Stmt, error) {
 	}
 
 	params := &columns{msg: newMsg(paramFmtToken), flags: param}
-	wideParams := &columns{msg: newMsg(paramFmt2Toekn), flags: wide | param}
+	wideParams := &columns{msg: newMsg(paramFmt2Token), flags: wide | param}
 	st.row = &row{msg: newMsg(paramToken)}
 
 	// get a statement number
@@ -66,7 +66,7 @@ func newStmt(ctx context.Context, s *session, query string) (*Stmt, error) {
 	// the server will spew out a rowfmt, but it's safe to ignore it, it will be resent
 	for f := s.initState(ctx,
 		map[token]messageReader{dynamic2Token: st.d,
-			paramFmtToken: params, paramFmt2Toekn: wideParams}); f != nil; f = f(s.state) {
+			paramFmtToken: params, paramFmt2Token: wideParams}); f != nil; f = f(s.state) {
 	}
 
 	if err := s.checkErr(s.state.err, "tds: Prepare failed", true); err != nil {

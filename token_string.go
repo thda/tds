@@ -4,7 +4,53 @@ package tds
 
 import "strconv"
 
-const _token_name = "noneTokencapabilityReqTokencapabilityResTokenparamFmt2ToeknlanguageTokenorderBy2TokenwideColumnFmtTokendynamic2TokenmsgTokenlogoutTokenreturnStatusTokencurCloseTokencurDeleteTokencurFetchTokencurFmtTokencurOpenTokencurDeclareTokentableNameTokencolumnInfoTokenoptionCmdTokencmpRowNameTokencmpRowFmtTokenorderByTokeninfoTokenloginAckTokencontrolTokenrowTokencmpRowTokenparamTokencapabilitiesTokenenvChangeTokensqlMessageTokendbRPCTokendynamicTokenparamFmtTokenauthTokencolumnFmtTokendoneTokendoneProcTokendoneInProcToken"
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[noneToken-0]
+	_ = x[capabilityReqToken-1]
+	_ = x[capabilityResToken-2]
+	_ = x[paramFmt2Token-32]
+	_ = x[languageToken-33]
+	_ = x[orderBy2Token-34]
+	_ = x[wideColumnFmtToken-97]
+	_ = x[dynamic2Token-98]
+	_ = x[msgToken-101]
+	_ = x[returnStatusToken-121]
+	_ = x[curCloseToken-128]
+	_ = x[curDeleteToken-129]
+	_ = x[curFetchToken-130]
+	_ = x[curFmtToken-131]
+	_ = x[curOpenToken-132]
+	_ = x[curDeclareToken-134]
+	_ = x[logoutToken-113]
+	_ = x[tableNameToken-164]
+	_ = x[columnInfoToken-165]
+	_ = x[optionCmdToken-166]
+	_ = x[cmpRowNameToken-167]
+	_ = x[cmpRowFmtToken-168]
+	_ = x[orderByToken-169]
+	_ = x[infoToken-171]
+	_ = x[loginAckToken-173]
+	_ = x[controlToken-174]
+	_ = x[rowToken-209]
+	_ = x[cmpRowToken-211]
+	_ = x[paramToken-215]
+	_ = x[capabilitiesToken-226]
+	_ = x[envChangeToken-227]
+	_ = x[sqlMessageToken-229]
+	_ = x[dbRPCToken-230]
+	_ = x[dynamicToken-231]
+	_ = x[paramFmtToken-236]
+	_ = x[authToken-237]
+	_ = x[columnFmtToken-238]
+	_ = x[doneToken-253]
+	_ = x[doneProcToken-254]
+	_ = x[doneInProcToken-255]
+}
+
+const _token_name = "noneTokencapabilityReqTokencapabilityResTokenparamFmt2TokenlanguageTokenorderBy2TokenwideColumnFmtTokendynamic2TokenmsgTokenlogoutTokenreturnStatusTokencurCloseTokencurDeleteTokencurFetchTokencurFmtTokencurOpenTokencurDeclareTokentableNameTokencolumnInfoTokenoptionCmdTokencmpRowNameTokencmpRowFmtTokenorderByTokeninfoTokenloginAckTokencontrolTokenrowTokencmpRowTokenparamTokencapabilitiesTokenenvChangeTokensqlMessageTokendbRPCTokendynamicTokenparamFmtTokenauthTokencolumnFmtTokendoneTokendoneProcTokendoneInProcToken"
 
 var _token_map = map[token]string{
 	0:   _token_name[0:9],

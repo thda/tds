@@ -188,6 +188,7 @@ func (s *session) login(prm connParams) (err error) {
 
 	loginAck := &loginAck{msg: newMsg(loginAckToken)}
 	pf := &columns{msg: newMsg(paramFmtToken)}
+	wpf := &columns{msg: newMsg(paramFmt2Token), flags: wide | param}
 	p := &row{msg: newMsg(paramToken)}
 
 	// only retry once
@@ -199,10 +200,14 @@ loginResponse:
 		map[token]messageReader{loginAckToken: loginAck,
 			capabilitiesToken: &s.capabilities,
 			paramFmtToken:     pf,
+			paramFmt2Token:    wpf,
 			paramToken:        p}); f != nil; f = f(s.state) {
-		if s.state.t == paramFmtToken {
-			// bind the param descriptor and the param
+		switch s.state.t {
+		// bind the param descriptor and the param
+		case paramFmtToken:
 			p.columns = pf.fmts
+		case paramFmt2Token:
+			p.columns = wpf.fmts
 		}
 	}
 

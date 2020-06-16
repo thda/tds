@@ -4,6 +4,16 @@ package tds
 
 import "strconv"
 
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[dbChange-1]
+	_ = x[langChange-2]
+	_ = x[charsetChange-3]
+	_ = x[packetSizeChange-4]
+}
+
 const _changeType_name = "dbChangelangChangecharsetChangepacketSizeChange"
 
 var _changeType_index = [...]uint8{0, 8, 18, 31, 47}

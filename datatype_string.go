@@ -4,58 +4,113 @@ package tds
 
 import "strconv"
 
-const _dataType_name = "UInt4ImageTextExtendedTypeVarbinaryIntNVarcharBinaryCharTinyintDateBitTimeSmallintDecimalIntSmalldatetimeRealMoneyDatetimeFloatNumericUTinyintUSmallintUIntUBigintUIntNBigDateTimeNDecimalNNumericNFloatNMoneyNDatetimeNSmallmoneyDateNUnicharTimeNUnivarcharTextLocatorImageLocatorUnitextLocatorUnitextLongCharBigdatetimeNBigtimeNBigdatetimeBigtimeBigintLongBinary"
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[uInt4Type-29]
+	_ = x[imageType-34]
+	_ = x[textType-35]
+	_ = x[extendedType-36]
+	_ = x[varbinaryType-37]
+	_ = x[intNType-38]
+	_ = x[varcharType-39]
+	_ = x[binaryType-45]
+	_ = x[charType-47]
+	_ = x[tinyintType-48]
+	_ = x[dateType-49]
+	_ = x[bitType-50]
+	_ = x[timeType-51]
+	_ = x[smallintType-52]
+	_ = x[decimalType-55]
+	_ = x[intType-56]
+	_ = x[smalldatetimeType-58]
+	_ = x[realType-59]
+	_ = x[moneyType-60]
+	_ = x[datetimeType-61]
+	_ = x[floatType-62]
+	_ = x[numericType-63]
+	_ = x[uTinyintType-64]
+	_ = x[uSmallintType-65]
+	_ = x[uIntType-66]
+	_ = x[uBigintType-67]
+	_ = x[uIntNType-68]
+	_ = x[bigDateTimeNType-80]
+	_ = x[decimalNType-106]
+	_ = x[numericNType-108]
+	_ = x[floatNType-109]
+	_ = x[moneyNType-110]
+	_ = x[datetimeNType-111]
+	_ = x[smallmoneyType-122]
+	_ = x[dateNType-123]
+	_ = x[unicharType-135]
+	_ = x[timeNType-147]
+	_ = x[univarcharType-155]
+	_ = x[textLocatorType-169]
+	_ = x[imageLocatorType-170]
+	_ = x[unitextLocatorType-171]
+	_ = x[unitextType-174]
+	_ = x[longCharType-175]
+	_ = x[bigdatetimeNType-187]
+	_ = x[bigtimeNType-188]
+	_ = x[bigdatetimeType-189]
+	_ = x[bigtimeType-190]
+	_ = x[bigintType-191]
+	_ = x[longBinaryType-225]
+}
+
+const _dataType_name = "uInt4TypeimageTypetextTypeextendedTypevarbinaryTypeintNTypevarcharTypebinaryTypecharTypetinyintTypedateTypebitTypetimeTypesmallintTypedecimalTypeintTypesmalldatetimeTyperealTypemoneyTypedatetimeTypefloatTypenumericTypeuTinyintTypeuSmallintTypeuIntTypeuBigintTypeuIntNTypebigDateTimeNTypedecimalNTypenumericNTypefloatNTypemoneyNTypedatetimeNTypesmallmoneyTypedateNTypeunicharTypetimeNTypeunivarcharTypetextLocatorTypeimageLocatorTypeunitextLocatorTypeunitextTypelongCharTypebigdatetimeNTypebigtimeNTypebigdatetimeTypebigtimeTypebigintTypelongBinaryType"
 
 var _dataType_map = map[dataType]string{
-	29:  _dataType_name[0:5],
-	34:  _dataType_name[5:10],
-	35:  _dataType_name[10:14],
-	36:  _dataType_name[14:26],
-	37:  _dataType_name[26:35],
-	38:  _dataType_name[35:39],
-	39:  _dataType_name[39:46],
-	45:  _dataType_name[46:52],
-	47:  _dataType_name[52:56],
-	48:  _dataType_name[56:63],
-	49:  _dataType_name[63:67],
-	50:  _dataType_name[67:70],
-	51:  _dataType_name[70:74],
-	52:  _dataType_name[74:82],
-	55:  _dataType_name[82:89],
-	56:  _dataType_name[89:92],
-	58:  _dataType_name[92:105],
-	59:  _dataType_name[105:109],
-	60:  _dataType_name[109:114],
-	61:  _dataType_name[114:122],
-	62:  _dataType_name[122:127],
-	63:  _dataType_name[127:134],
-	64:  _dataType_name[134:142],
-	65:  _dataType_name[142:151],
-	66:  _dataType_name[151:155],
-	67:  _dataType_name[155:162],
-	68:  _dataType_name[162:167],
-	80:  _dataType_name[167:179],
-	106: _dataType_name[179:187],
-	108: _dataType_name[187:195],
-	109: _dataType_name[195:201],
-	110: _dataType_name[201:207],
-	111: _dataType_name[207:216],
-	122: _dataType_name[216:226],
-	123: _dataType_name[226:231],
-	135: _dataType_name[231:238],
-	147: _dataType_name[238:243],
-	155: _dataType_name[243:253],
-	169: _dataType_name[253:264],
-	170: _dataType_name[264:276],
-	171: _dataType_name[276:290],
-	174: _dataType_name[290:297],
-	175: _dataType_name[297:305],
-	187: _dataType_name[305:317],
-	188: _dataType_name[317:325],
-	189: _dataType_name[325:336],
-	190: _dataType_name[336:343],
-	191: _dataType_name[343:349],
-	225: _dataType_name[349:359],
+	29:  _dataType_name[0:9],
+	34:  _dataType_name[9:18],
+	35:  _dataType_name[18:26],
+	36:  _dataType_name[26:38],
+	37:  _dataType_name[38:51],
+	38:  _dataType_name[51:59],
+	39:  _dataType_name[59:70],
+	45:  _dataType_name[70:80],
+	47:  _dataType_name[80:88],
+	48:  _dataType_name[88:99],
+	49:  _dataType_name[99:107],
+	50:  _dataType_name[107:114],
+	51:  _dataType_name[114:122],
+	52:  _dataType_name[122:134],
+	55:  _dataType_name[134:145],
+	56:  _dataType_name[145:152],
+	58:  _dataType_name[152:169],
+	59:  _dataType_name[169:177],
+	60:  _dataType_name[177:186],
+	61:  _dataType_name[186:198],
+	62:  _dataType_name[198:207],
+	63:  _dataType_name[207:218],
+	64:  _dataType_name[218:230],
+	65:  _dataType_name[230:243],
+	66:  _dataType_name[243:251],
+	67:  _dataType_name[251:262],
+	68:  _dataType_name[262:271],
+	80:  _dataType_name[271:287],
+	106: _dataType_name[287:299],
+	108: _dataType_name[299:311],
+	109: _dataType_name[311:321],
+	110: _dataType_name[321:331],
+	111: _dataType_name[331:344],
+	122: _dataType_name[344:358],
+	123: _dataType_name[358:367],
+	135: _dataType_name[367:378],
+	147: _dataType_name[378:387],
+	155: _dataType_name[387:401],
+	169: _dataType_name[401:416],
+	170: _dataType_name[416:432],
+	171: _dataType_name[432:450],
+	174: _dataType_name[450:461],
+	175: _dataType_name[461:473],
+	187: _dataType_name[473:489],
+	188: _dataType_name[489:501],
+	189: _dataType_name[501:516],
+	190: _dataType_name[516:527],
+	191: _dataType_name[527:537],
+	225: _dataType_name[537:551],
 }
 
 func (i dataType) String() string {

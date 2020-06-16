@@ -4,6 +4,17 @@ package tds
 
 import "strconv"
 
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[hidden-1]
+	_ = x[key-2]
+	_ = x[writable-16]
+	_ = x[nullable-32]
+	_ = x[identity-64]
+}
+
 const (
 	_columnFlag_name_0 = "hiddenkey"
 	_columnFlag_name_1 = "writable"

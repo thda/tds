@@ -445,7 +445,6 @@ func (b *buf) receive(s *state) stateFn {
 	// check if the message is in the ones to return
 	// and attempt to skip if not found
 	msg, ok := b.defaultMessageMap[s.t]
-
 	// look in provided message map
 	if !ok {
 		msg, ok = s.msg[s.t]
