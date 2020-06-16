@@ -800,6 +800,17 @@ func TestAffectedRows(t *testing.T) {
 	if n != 1 {
 		t.Error("Expected 1 row affected, got ", n)
 	}
+	res, err = tx.Exec("select * from #foo where bar = ?", 2)
+	if err != nil {
+		t.Fatal("select failed", err)
+	}
+	n, err = res.RowsAffected()
+	if err != nil {
+		t.Fatal("rows affected failed", err)
+	}
+	if n != 1 {
+		t.Error("Expected 1 row affected, got ", n)
+	}
 	res, err = tx.Exec("update #foo set bar = 2")
 	if err != nil {
 		t.Fatal("insert failed", err)
