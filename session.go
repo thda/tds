@@ -538,7 +538,10 @@ func (s *session) SelectValue(ctx context.Context, query string) (value interfac
 }
 
 func (s *session) clearResult() {
-	s.res = &Result{lastError: nil, s: s}
+	s.res.affectedRows, s.res.returnStatus = 0, 0
+	s.res.hasError, s.res.hasAffectedRows, s.res.hasReturnStatus, s.res.final = false, false, false, false
+	s.res.messages = nil
+	s.res.lastError = nil
 }
 
 // returns a brand new netlib state

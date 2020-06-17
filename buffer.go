@@ -469,9 +469,7 @@ func (b *buf) receive(s *state) stateFn {
 	}
 
 	// return
-	return func(*state) stateFn {
-		return b.receive(s)
-	}
+	return b.receive
 }
 
 // watchCancel will start a cancelation goroutine
