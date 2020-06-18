@@ -261,14 +261,14 @@ loginResponse:
 		msg2 := &sybMsg{msg: newMsg(msgToken), field1: 0x01, field2: 0x0020}
 
 		cols1 := &columns{msg: newMsg(paramFmtToken), fmts: []colFmt{
-			colFmt{colType: getType(longBinaryType, 2147483647)},
+			{colType: getType(longBinaryType, 2147483647)},
 		}}
 		row1 := &row{msg: newMsg(paramToken), data: []driver.Value{ciphertext},
 			columns: cols1.fmts[:]}
 
 		cols2 := &columns{msg: newMsg(paramFmtToken), fmts: []colFmt{
-			colFmt{colType: getType(varcharType, 255)},
-			colFmt{colType: getType(longBinaryType, 2147483647)},
+			{colType: getType(varcharType, 255)},
+			{colType: getType(longBinaryType, 2147483647)},
 		}}
 		row2 := &row{msg: newMsg(paramToken), data: []driver.Value{"", ciphertext},
 			columns: cols2.fmts[:]}

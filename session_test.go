@@ -130,13 +130,13 @@ type isolationTest struct {
 }
 
 var isolationTests = []isolationTest{
-	isolationTest{input: &sql.TxOptions{ReadOnly: true, Isolation: sql.LevelDefault}, err: ErrNoReadOnly},
-	isolationTest{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelReadUncommitted}, err: nil, output: 0},
-	isolationTest{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelReadCommitted}, err: nil, output: 1},
-	isolationTest{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelRepeatableRead}, err: nil, output: 2},
-	isolationTest{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelSerializable}, err: nil, output: 3},
-	isolationTest{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelSnapshot}, err: ErrInvalidIsolationLevel},
-	isolationTest{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelLinearizable}, err: ErrInvalidIsolationLevel},
+	{input: &sql.TxOptions{ReadOnly: true, Isolation: sql.LevelDefault}, err: ErrNoReadOnly},
+	{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelReadUncommitted}, err: nil, output: 0},
+	{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelReadCommitted}, err: nil, output: 1},
+	{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelRepeatableRead}, err: nil, output: 2},
+	{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelSerializable}, err: nil, output: 3},
+	{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelSnapshot}, err: ErrInvalidIsolationLevel},
+	{input: &sql.TxOptions{ReadOnly: false, Isolation: sql.LevelLinearizable}, err: ErrInvalidIsolationLevel},
 }
 
 // test all the transaction levels
