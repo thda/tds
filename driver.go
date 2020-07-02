@@ -168,15 +168,18 @@ type ErrorHandler interface {
 	SetErrorhandler(fn func(s SybError) bool)
 }
 
-// register the driver
-type sybDriver struct {
+// SybDriver is the driver implementing driver.Driver interface
+type SybDriver struct {
 	sync.Mutex
 	IsError func(s SybError) bool
 }
 
-var sybDriverInstance = &sybDriver{}
+var sybDriverInstance = &SybDriver{}
 
-func (d *sybDriver) Open(dsn string) (driver.Conn, error) {
+// Open opens a connection to the server.
+// See https://github.com/thda/tds#connection-string for the dsn formatting.
+// It also set the custum error handler if any.
+func (d *SybDriver) Open(dsn string) (driver.Conn, error) {
 	conn, err := NewConn(dsn)
 	if d.IsError != nil {
 		conn.SetErrorhandler(d.IsError)
@@ -187,7 +190,27 @@ func (d *sybDriver) Open(dsn string) (driver.Conn, error) {
 // SetErrorhandler allows setting a custom error handler.
 // The function shall accept an SQL Message and return a boolean
 // indicating if this message is indeed a critical error.
-func (d *sybDriver) SetErrorhandler(fn func(s SybError) bool) {
+//
+// Example:
+//
+// 	// Print showplan messages
+// 	conn.Driver().(tds.ErrorHandler).SetErrorhandler(func(m tds.SybError) bool {
+// 		if m.Severity == 10 {
+// 			if (m.MsgNumber >= 3612 && m.MsgNumber <= 3615) ||
+// 				(m.MsgNumber >= 6201 && m.MsgNumber <= 6299) ||
+// 				(m.MsgNumber >= 10201 && m.MsgNumber <= 10299) {
+// 				fmt.Printf(m.Message)
+// 			} else {
+// 				fmt.Println(strings.TrimRight(m.Message, "\n"))
+// 			}
+// 		}
+//
+// 		if m.Severity > 10 {
+// 			fmt.Print(m)
+// 		}
+// 		return m.Severity > 10
+// 	})
+func (d *SybDriver) SetErrorhandler(fn func(s SybError) bool) {
 	d.Lock()
 	defer d.Unlock()
 	d.IsError = fn
@@ -198,7 +221,7 @@ func init() {
 	sql.Register("tds", sybDriverInstance)
 }
 
-var _ driver.Driver = (*sybDriver)(nil)
+var _ driver.Driver = (*SybDriver)(nil)
 
 // empty objects to return on error
 // Make sure the session is not nil to avoid nil pointers
