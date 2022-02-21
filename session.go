@@ -348,6 +348,9 @@ func (s *session) Close() error {
 		logout{msg: newMsg(logoutToken)}); err != nil {
 		return fmt.Errorf("tds: close failed: %s", err)
 	}
+
+	s.b.receive(s.state) // https://github.com/thda/tds/issues/29
+
 	return nil
 }
 
